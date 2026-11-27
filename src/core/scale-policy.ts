@@ -66,8 +66,15 @@ export function resolveStrategy(
         ? requested
         : SIM_CAP;
 
-  const sampled = physics.sampling === 'never' ? requested : Math.min(requested, cap);
-  const simulated = Math.max(1, sampled);
+  // 安全闸：即使 sampling='never'，也不能让浏览器尝试分配超出可用内存的数组。
+  // 每体约 123 字节（SoA 全字段）；限制在 4 GB（浏览器 TypedArray 实际可达上限
+  // 通常远低于此），约 416 万体。超出时强制采样，给出 critical 提示。
+  const PER_BODY_BYTES = 123;
+  const MEMORY_BUDGET_BYTES = 512_000_000;
+  const allocCap = Math.max(1, Math.floor(MEMORY_BUDGET_BYTES / PER_BODY_BYTES));
+  const wanted = physics.sampling === 'never' ? requested : Math.min(requested, cap);
+  const simulated = Math.max(1, Math.min(wanted, allocCap));
+  const memoryClamped = wanted > simulated;
   const weight = requested / simulated;
 
   let engine =
@@ -119,6 +126,14 @@ export function resolveStrategy(
       text:
         `统计采样：请求 ${requested.toLocaleString('en-US')} 颗，当前上限 ${simulated.toLocaleString('en-US')}。` +
         `每个代表粒子携带 ${weight.toFixed(1)} 颗真实天体的引力质量；场量为蒙特卡洛估计。`,
+    });
+  }
+  if (memoryClamped) {
+    notices.push({
+      level: 'critical',
+      text:
+        `请求逐体积分 ${requested.toLocaleString('en-US')} 颗需约 ${(requested * PER_BODY_BYTES / 1e9).toFixed(1)} GB，` +
+        `超出浏览器可分配内存；已强制采样到 ${simulated.toLocaleString('en-US')} 颗。`,
     });
   }
   if (physics.sampling === 'never' && requested > cap && physics.maxSimulated > 0) {

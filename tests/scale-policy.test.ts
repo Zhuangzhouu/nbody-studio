@@ -6,7 +6,7 @@ import {
   RENDER_CAP,
   SIM_CAP,
 } from '../src/core/constants';
-import { DEFAULT_PHYSICS, DEFAULT_VIEW } from '../src/core/params';
+import { DEFAULT_INIT, DEFAULT_PHYSICS, DEFAULT_VIEW } from '../src/core/params';
 import { engineFor, resolveStrategy } from '../src/core/scale-policy';
 
 describe('规模策略分级', () => {
@@ -81,5 +81,26 @@ describe('规模策略分级', () => {
     const a = resolveStrategy(10_000, DEFAULT_PHYSICS, DEFAULT_VIEW);
     const b = resolveStrategy(100_000, DEFAULT_PHYSICS, DEFAULT_VIEW);
     expect(b.estimatedBytes).toBeGreaterThan(a.estimatedBytes * 5);
+  });
+});
+
+describe('内存安全闸', () => {
+  it('sampling=never + 超大 count 不导致不可分配内存', () => {
+    const st = resolveStrategy(
+      2_000_000_000,
+      { ...DEFAULT_PHYSICS, sampling: 'never', maxSimulated: 0 },
+      DEFAULT_VIEW,
+    );
+    expect(st.simulated).toBeLessThanOrEqual(4_200_000);
+    expect(st.estimatedBytes).toBeLessThanOrEqual(520_000_000);
+    expect(st.notices.some((n) => n.level === 'critical' && n.text.includes('超出浏览器可分配内存'))).toBe(true);
+    expect(st.weight).toBeGreaterThan(1);
+  });
+
+  it('正常规模不受影响', () => {
+    const st = resolveStrategy(1200, DEFAULT_PHYSICS, DEFAULT_VIEW);
+    expect(st.simulated).toBe(1200);
+    expect(st.weight).toBe(1);
+    expect(st.notices.some((n) => n.text.includes('超出浏览器可分配内存'))).toBe(false);
   });
 });
