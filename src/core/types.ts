@@ -266,6 +266,8 @@ export interface Diagnostics {
   comZ: number;
   /** D2：本步实际使用的时间步长。 */
   dtEff: number;
+  /** R38：当前积分器。 */
+  integrator: IntegratorKind;
   /** E4：耗时分段（毫秒，指数平滑）。 */
   msForce: number;
   msIntegrate: number;

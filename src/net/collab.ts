@@ -120,9 +120,14 @@ export class CollabClient {
   }
 
   private send(obj: Record<string, unknown>): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(obj));
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
+    const text = JSON.stringify(obj);
+    // R49：单条消息大小上限（防脚本刷大包）
+    if (text.length > 1_000_000) {
+      this.cb.onError('协作消息过大，已拒绝发送');
+      return;
     }
+    this.ws.send(text);
   }
 
   private dispatch(msg: Record<string, unknown>): void {

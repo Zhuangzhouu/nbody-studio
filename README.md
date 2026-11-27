@@ -69,7 +69,7 @@ npm run dev          # http://localhost:5173
 | 命令 | 作用 |
 | --- | --- |
 | `npm run build` | 类型检查 + 生产构建 |
-| `npm test` | 139 项单元测试（含恒星演化 H/I/J 全路径、3D 物理、JSON、快捷键解析） |
+| `npm test` | 171 项单元测试（含恒星演化 H/I/J 全路径、3D 物理、JSON、快捷键解析） |
 | `npm run bench` | 2D 规模基准 |
 | `npm run bench3` | 3D 规模基准 |
 | `node tools/verify2.mjs` / `verify3.mjs` / `verify-editor.mjs` / `verify-shortcuts.mjs` / `verify-stellar.mjs` | 真实浏览器端到端验证（需先 `npm run dev`） |
@@ -152,6 +152,20 @@ npm run dev          # http://localhost:5173
 所有快捷键在 `app.ts` 一处注册；面板侧提供同步方法，保证快捷键修改后控件状态不脱节。
 
 ![快捷键帮助](shots4/01-help.png)
+
+---
+
+## 自主提示词 50 轮（v3.0）
+
+`PROMPTS-AUTO.md` 记录 50 条自主生成的增强提示词，已全部完成：
+
+| 批次 | 内容 |
+|---|---|
+| 1–10 | 数值工具（时长/角度/平滑/颜色/正模/插值） |
+| 11–20 | 物理公式（轨道周期/逃逸速度/史瓦西半径/维里/希尔球等） |
+| 21–30 | 配置校验收紧（theta/pointSize/pmGrid 2 的幂/深度） |
+| 31–40 | 5 个新快捷键（63 项）、HUD 步长与积分器、帮助分组折叠 |
+| 41–50 | Worker 异常捕获、NaN 渲染保护、zip bomb/深递归防护 |
 
 ---
 
@@ -417,7 +431,7 @@ tools/                  基准 + 浏览器验证脚本
 
 ## 验证结果
 
-- **139 项单元测试全部通过**（H 组 +11、I 组 +2、J 组 +9）：2D/3D 二体轨道能量与动量守恒、逐体引力参数、2D 四叉树与
+- **171 项单元测试全部通过**（H 组 +11、I 组 +2、J 组 +9）：2D/3D 二体轨道能量与动量守恒、逐体引力参数、2D 四叉树与
   3D 八叉树误差收敛、3D PM 与直接求和整体吻合、gzip/流式/校验、逐体配置驱动 World。
 - **浏览器端到端**（Edge headless）：默认 3D → 3D 拖拽旋转 → JSON 模板双体 →
   完整 JSON 导出（逐体字段核对）→ gzip 导出 → 自定义三体 3D → 2D 切换 → INT_MAX 策略 →

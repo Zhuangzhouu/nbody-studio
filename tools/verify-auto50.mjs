@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ channel: 'msedge', headless: true, args: ['--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+const errs = [];
+p.on('pageerror', e => errs.push(e.message));
+p.on('console', m => { if (m.type() === 'error' && !m.text().includes('404')) errs.push(m.text()); });
+await p.goto('http://localhost:5173/', { waitUntil: 'domcontentloaded' });
+await p.waitForFunction(() => document.getElementById('boot')?.classList.contains('hidden'), null, { timeout: 30000 });
+console.log('HUD dt', await p.locator('#hud-dt').textContent());
+console.log('HUD integrator', await p.locator('#hud-integrator').textContent());
+console.log('shortcuts', await p.evaluate(() => document.querySelector('.help-subtitle')?.textContent));
+console.log('errors', errs.length ? errs.slice(0, 3) : '(无)');
+await b.close();

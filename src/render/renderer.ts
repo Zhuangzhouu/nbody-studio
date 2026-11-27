@@ -452,7 +452,7 @@ export class Renderer {
       ? 3.2
       : count > 120_000 ? 0.7 : count > 40_000 ? 0.85 : 1;
     gl.uniform1f(u.uIntensity, intensity);
-    gl.uniform1f(u.uPointSize, view.pointSize * sizeScale);
+    gl.uniform1f(u.uPointSize, Math.min(64, view.pointSize * sizeScale)); // R44 上限保护
     gl.uniform1f(u.uDpr, this.dpr);
     gl.drawArrays(gl.POINTS, 0, count);
   }

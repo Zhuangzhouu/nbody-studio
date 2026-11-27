@@ -35,6 +35,7 @@ import {
   type Selection,
 } from './app-enhanced';
 import { presetById } from '../core/presets';
+import { DEFAULT_PHYSICS } from '../core/params';
 import { FieldOverlay } from './field-overlay';
 import { guardConfigText, guardImportFile, RateLimiter, WorkerWatchdog } from './guard';
 import { CollabClient, defaultRelayUrl, type Member } from '../net/collab';
@@ -636,6 +637,23 @@ class App {
       }),
 
       // 帮助
+      // R31–R35 自主批次
+      this.def('remove-drift', 'Shift+Home', '消除质心漂移', '配置与编辑', () => {
+        if (!this.client.removeDrift(false)) this.toast('内核忙碌，请稍后重试', 'warn');
+        else this.toast('已消除质心漂移');
+      }),
+      this.def('reset-physics', 'Ctrl+Shift+R', '重置物理参数到默认', '配置与编辑', () => {
+        this.panel.applyConfigToState({
+          ...this.currentConfig(),
+          physics: { ...DEFAULT_PHYSICS },
+        });
+        this.apply();
+        this.notify('已重置物理参数');
+      }, { allowInInput: true }),
+      this.def('export-trail', 'KeyP', '导出轨迹 CSV', '配置与编辑', () => this.exportTrailCsv()),
+      this.def('toggle-record', 'Shift+P', '切换 WEBM 录制', '配置与编辑', () => this.recorder.toggle((m) => this.toast(m))),
+      this.def('share-link-alias', 'Ctrl+D', '复制分享链接（别名）', '配置与编辑', () => void this.shareLink(), { allowInInput: true }),
+
       this.def('help', '?', '打开 / 关闭快捷键帮助', '帮助', () => this.help.toggle()),
       this.def('help-f1', 'F1', '打开 / 关闭快捷键帮助', '帮助', () => this.help.toggle(), {
         allowInInput: true,

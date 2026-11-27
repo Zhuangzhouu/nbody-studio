@@ -7,6 +7,7 @@ import { BodySet } from './bodies';
 import { computeDynamics, type DynamicsReport } from './dynamics';
 import { applyStarConfig, refreshStarAfterMassChange } from './stellar-state';
 import { STAR_TYPE_CODES, starTypeCode } from './bodies';
+import { finiteOr } from './mathx';
 import {
   advanceEvolution,
   isRemnant,
@@ -829,6 +830,7 @@ export class World {
       comY: dyn.comY,
       comZ: dyn.comZ,
       dtEff: this.dtEff || this.physics.dt,
+      integrator: this.integrator,
       msForce: this.msForceEma,
       msIntegrate: this.msIntegrateEma,
       msCollision: this.msCollisionEma,
@@ -906,11 +908,12 @@ export class World {
       else scalar = Math.hypot(px - com!.x, py - com!.y, useZ ? pz - com!.z : 0);
 
       const o = count * 5;
-      vertex[o] = px;
-      vertex[o + 1] = py;
-      vertex[o + 2] = pz;
-      vertex[o + 3] = scalar;
-      vertex[o + 4] = mass[i];
+      // R43：仅保护渲染缓冲，物理数组不变；NaN 位置钳到 0 防止 GPU 崩溃
+      vertex[o] = finiteOr(px, 0);
+      vertex[o + 1] = finiteOr(py, 0);
+      vertex[o + 2] = finiteOr(pz, 0);
+      vertex[o + 3] = finiteOr(scalar, 0);
+      vertex[o + 4] = finiteOr(mass[i], 1);
 
       if (scalar < sMin) sMin = scalar;
       if (scalar > sMax) sMax = scalar;

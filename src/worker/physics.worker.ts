@@ -70,7 +70,12 @@ scope.onmessage = (ev: MessageEvent<ToWorker>) => {
       case 'advance': {
         if (!world) return;
         const steps = Math.max(0, Math.min(64, Math.floor(msg.steps)));
-        for (let i = 0; i < steps; i++) world.step();
+        try {
+          for (let i = 0; i < steps; i++) world.step();
+        } catch (err) {
+          post({ type: 'error', message: `模拟步异常：${err instanceof Error ? err.message : String(err)}` });
+          return;
+        }
         pushFrame();
         break;
       }

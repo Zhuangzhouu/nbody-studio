@@ -20,6 +20,8 @@ export class Hud {
   private merge = $('hud-merge');
   private engine = $('engine-badge');
   private fps = $('fps-badge');
+  private dt = $('hud-dt');
+  private integrator = $('hud-integrator');
 
   private lastFpsUpdate = 0;
   private frames = 0;
@@ -53,6 +55,8 @@ export class Hud {
 
     this.t.textContent = diag.time.toFixed(2);
     this.step.textContent = formatInt(diag.step);
+    this.dt.textContent = formatNumber(diag.dtEff ?? 0, 4);
+    this.integrator.textContent = diag.integrator ?? '—';
 
     // I3：物理时钟（Myr 换算 + 演化速率 = ΔMyr / Δ真实秒，EMA 平滑）
     if (stellar) {

@@ -69,6 +69,25 @@ export function configToJSON(config: SimulationConfig, pretty = true): string {
 
 export function parseConfigText(text: string): ValidationResult {
   try {
+    // R48：括号深度预检，防止极深嵌套 JSON 触发解析器爆栈
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (ch === '\\') escaped = true;
+        else if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') { inString = true; continue; }
+      if (ch === '{' || ch === '[') {
+        if (++depth > 64) {
+          return { ok: false, config: null, errors: ['JSON 嵌套深度超过 64 层'], warnings: [] };
+        }
+      } else if (ch === '}' || ch === ']') depth--;
+    }
     return validateConfig(JSON.parse(text));
   } catch (err) {
     return {
@@ -93,7 +112,10 @@ export async function gunzip(data: Uint8Array): Promise<Uint8Array> {
   const Ctor = (globalThis as unknown as Record<string, unknown>).DecompressionStream;
   if (typeof Ctor !== 'function') return data;
   const stream = new Blob([data as BlobPart]).stream().pipeThrough(new DecompressionStream('gzip'));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  const out = new Uint8Array(await new Response(stream).arrayBuffer());
+  // R47：zip bomb 防护——解压后超过 12 MB 直接拒绝
+  if (out.length > 12_000_000) throw new Error('解压后配置超过 12 MB 上限');
+  return out;
 }
 
 /** 触发浏览器下载。 */

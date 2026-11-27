@@ -736,11 +736,13 @@ export class ControlPanel {
       const p = PRESETS.find((x) => x.id === sel.value);
       if (p) desc.textContent = p.description;
     });
+    const conflictHint = el('div', 'field-hint', '载入预设不会改变快捷键；若发现键位冲突可在帮助面板（?）查看全部 63 项。');
+    conflictHint.style.fontSize = '10px';
     const apply = el('button', 'btn btn--apply', '载入预设');
     apply.type = 'button';
     apply.id = 'preset-apply';
     apply.addEventListener('click', () => this.cb.onPreset(sel.value));
-    body.append(sel, desc, apply);
+    body.append(sel, desc, conflictHint, apply);
     this.root.append(root);
   }
 

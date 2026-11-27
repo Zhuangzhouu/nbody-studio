@@ -126,9 +126,9 @@ export function validateConfig(input: unknown, maxBodies = Infinity): Validation
   const physics: PhysicsParams = {
     dimensions,
     G: num(p, 'G', DEFAULT_PHYSICS.G, errors, 'physics', { minExclusive: true }),
-    dt: num(p, 'dt', DEFAULT_PHYSICS.dt, errors, 'physics', { minExclusive: true }),
+    dt: num(p, 'dt', DEFAULT_PHYSICS.dt, errors, 'physics', { minExclusive: true, max: 1000 }),
     softening: num(p, 'softening', DEFAULT_PHYSICS.softening, errors, 'physics', { min: 0 }),
-    theta: num(p, 'theta', DEFAULT_PHYSICS.theta, errors, 'physics', { min: 0.01 }),
+    theta: num(p, 'theta', DEFAULT_PHYSICS.theta, errors, 'physics', { min: 0.01, max: 2 }),
     integrator: str(p, 'integrator', INTEGRATORS, DEFAULT_PHYSICS.integrator, 'physics', errors),
     collision: str(p, 'collision', COLLISIONS, DEFAULT_PHYSICS.collision, 'physics', errors),
     restitution: num(p, 'restitution', DEFAULT_PHYSICS.restitution, errors, 'physics', { min: 0, max: 1 }),
@@ -147,7 +147,7 @@ export function validateConfig(input: unknown, maxBodies = Infinity): Validation
   const init: InitParams = {
     count: num(i, 'count', DEFAULT_INIT.count, errors, 'init', { min: 1, max: 2147483647, integer: true }),
     distribution: str(i, 'distribution', DISTRIBUTIONS, DEFAULT_INIT.distribution, 'init', errors),
-    radius: num(i, 'radius', DEFAULT_INIT.radius, errors, 'init', { minExclusive: true }),
+    radius: num(i, 'radius', DEFAULT_INIT.radius, errors, 'init', { minExclusive: true, max: 1e12 }),
     massMin: num(i, 'massMin', DEFAULT_INIT.massMin, errors, 'init', { minExclusive: true }),
     massMax: num(i, 'massMax', DEFAULT_INIT.massMax, errors, 'init', { minExclusive: true }),
     totalMass: num(i, 'totalMass', DEFAULT_INIT.totalMass, errors, 'init', { minExclusive: true }),
@@ -166,15 +166,19 @@ export function validateConfig(input: unknown, maxBodies = Infinity): Validation
     trails: bool(v, 'trails', DEFAULT_VIEW.trails, 'view', errors),
     trailLength: num(v, 'trailLength', DEFAULT_VIEW.trailLength, errors, 'view', { min: 0 }),
     trailBodies: num(v, 'trailBodies', DEFAULT_VIEW.trailBodies, errors, 'view', { min: 0, integer: true }),
-    trailPoints: num(v, 'trailPoints', DEFAULT_VIEW.trailPoints, errors, 'view', { min: 2, max: 100000, integer: true }),
+    trailPoints: num(v, 'trailPoints', DEFAULT_VIEW.trailPoints, errors, 'view', { min: 2, max: 10000, integer: true }),
     maxRenderPoints: num(v, 'maxRenderPoints', DEFAULT_VIEW.maxRenderPoints, errors, 'view', { min: 0, integer: true }),
     colorMode: str(v, 'colorMode', COLORS, DEFAULT_VIEW.colorMode, 'view', errors),
-    pointSize: num(v, 'pointSize', DEFAULT_VIEW.pointSize, errors, 'view', { min: 0.1, max: 100 }),
+    pointSize: num(v, 'pointSize', DEFAULT_VIEW.pointSize, errors, 'view', { min: 0.5, max: 20 }),
     glow: bool(v, 'glow', DEFAULT_VIEW.glow, 'view', errors),
     showGrid: bool(v, 'showGrid', DEFAULT_VIEW.showGrid, 'view', errors),
   };
 
   const r = isObj(input.run) ? input.run : {};
+  if (physics.pmGrid > 0 && (physics.pmGrid & (physics.pmGrid - 1)) !== 0) {
+    errors.push('physics.pmGrid 必须是 2 的幂');
+  }
+
   const run: RunParams = {
     playing: bool(r, 'playing', DEFAULT_RUN.playing, 'run', errors),
     speed: num(r, 'speed', DEFAULT_RUN.speed, errors, 'run', { minExclusive: true }),
@@ -184,9 +188,9 @@ export function validateConfig(input: unknown, maxBodies = Infinity): Validation
   const stellar: StellarConfig = {
     massUnit: num(st, 'massUnit', DEFAULT_STELLAR.massUnit, errors, 'stellar', { minExclusive: true }),
     timeUnit: num(st, 'timeUnit', DEFAULT_STELLAR.timeUnit, errors, 'stellar', { minExclusive: true }),
-    lengthUnit: num(st, 'lengthUnit', DEFAULT_STELLAR.lengthUnit, errors, 'stellar', { minExclusive: true }),
+    lengthUnit: num(st, 'lengthUnit', DEFAULT_STELLAR.lengthUnit, errors, 'stellar', { minExclusive: true, max: 1e12 }),
     kickRadius: num(st, 'kickRadius', DEFAULT_STELLAR.kickRadius, errors, 'stellar', { min: 0 }),
-    kickGain: num(st, 'kickGain', DEFAULT_STELLAR.kickGain, errors, 'stellar', { min: 0 }),
+    kickGain: num(st, 'kickGain', DEFAULT_STELLAR.kickGain, errors, 'stellar', { min: 0, max: 100 }),
     accretion: bool(st, 'accretion', DEFAULT_STELLAR.accretion, 'stellar', errors),
     wind: bool(st, 'wind', DEFAULT_STELLAR.wind, 'stellar', errors),
     transfer: bool(st, 'transfer', DEFAULT_STELLAR.transfer, 'stellar', errors),

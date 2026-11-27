@@ -66,8 +66,16 @@ export class HelpOverlay {
     this.body.replaceChildren();
     for (const { group, items } of this.manager.groups()) {
       const section = el('div', 'help-group');
-      section.append(el('div', 'help-group-title', group));
+      const title = el('div', 'help-group-title', `${group} · ${items.length}`);
+      title.title = '点击折叠 / 展开';
+      title.style.cursor = 'pointer';
+      section.append(title);
       const grid = el('div', 'help-grid');
+      title.addEventListener('click', () => {
+        const collapsed = section.dataset.collapsed === 'true';
+        section.dataset.collapsed = collapsed ? 'false' : 'true';
+        grid.style.display = collapsed ? '' : 'none';
+      });
       for (const item of items) {
         const row = el('div', 'help-row');
         const label = el('div', 'help-label');
