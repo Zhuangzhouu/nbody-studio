@@ -42,3 +42,4 @@ release2/
 release3/
 
 dist-packages/*.zip
+tools/release.mjs
