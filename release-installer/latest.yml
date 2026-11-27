@@ -1,8 +1,0 @@
-version: 2.8.0
-files:
-  - url: NBodyStudio-2.8.0-setup.exe
-    sha512: uezcUvoZOFlXtqK44AaKJQhYR3smLZltWR4Qu+DLr1pBOr9yoAMrntCpoyiZO7/qsJJb9HIQa7UUx5Y3Q0GrIA==
-    size: 76634160
-path: NBodyStudio-2.8.0-setup.exe
-sha512: uezcUvoZOFlXtqK44AaKJQhYR3smLZltWR4Qu+DLr1pBOr9yoAMrntCpoyiZO7/qsJJb9HIQa7UUx5Y3Q0GrIA==
-releaseDate: '2026-11-27T04:00:54.171Z'
