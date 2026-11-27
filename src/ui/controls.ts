@@ -102,7 +102,7 @@ const ENGINES: Array<{ value: EnginePreference; label: string }> = [
   { value: 'auto', label: 'auto（按规模自动）' },
   { value: 'direct', label: '直接求和（最精确）' },
   { value: 'barnes-hut', label: 'Barnes-Hut 树（单极）' },
-  { value: 'multipole', label: '自适应四极多极（推荐，更快）' },
+  { value: 'multipole', label: '自适应四极多极（更精确，较慢）' },
   { value: 'particle-mesh', label: '粒子网格 PM' },
   { value: 'treepm', label: 'TreePM（近场 BH + 远场 PM）' },
 ];

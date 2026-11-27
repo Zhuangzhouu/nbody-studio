@@ -47,8 +47,10 @@ export class MultipoleSolver implements ForceSolver {
   private minSize = 1e-6;
   /** 每体最终所在叶节点索引（build 时记录，用于排除自作用祖先）。 */
   private bodyLeaf = new Int32Array(0);
-  /** 父节点索引，用于判断某节点是否为 body 所在叶的祖先。 */
+  /** 父节点索引（build 期维护）。 */
   private nodeParent = new Int32Array(0);
+  /** 当前目标体 i 的祖先标记：build 后按叶路径置 1，遍历时 O(1) 查询。 */
+  private ancestorMark = new Uint8Array(0);
   private lastTheta = 0.6;
 
   compute(b: BodySet, p: PhysicsParams): void {
@@ -62,7 +64,11 @@ export class MultipoleSolver implements ForceSolver {
     this.k = flat ? 4 : 8;
     this.lastTheta = p.theta;
     this.ensureCapacity(Math.max(b.n, 1));
-    if (this.bodyLeaf.length < b.n) this.bodyLeaf = new Int32Array(Math.ceil(b.n * 1.5) + 64);
+    if (this.bodyLeaf.length < b.n) {
+      const cap = Math.ceil(b.n * 1.5) + 64;
+      this.bodyLeaf = new Int32Array(cap);
+      this.ancestorMark = new Uint8Array(cap);
+    }
     this.build(b);
     this.traverse(b, p);
   }
@@ -273,6 +279,10 @@ export class MultipoleSolver implements ForceSolver {
       if (mass[i] <= 0) continue;
       const xi = x[i], yi = y[i], zi = useZ ? z[i] : 0;
       let axi = 0, ayi = 0, azi = 0;
+      // 标记 i 的祖先路径（含自身叶），遍历时 O(1) 排除自作用
+      this.ancestorMark.fill(0, 0, this.nodeCount);
+      let anc = this.bodyLeaf[i];
+      while (anc !== -1) { this.ancestorMark[anc] = 1; anc = this.nodeParent[anc]; }
       let sp = 0;
       stack[sp++] = 0;
 
@@ -305,10 +315,8 @@ export class MultipoleSolver implements ForceSolver {
           continue;
         }
 
-        // 排除自作用：若 node 是 i 所属叶的祖先，必须继续下钻
-        let anc = this.bodyLeaf[i];
-        while (anc !== -1 && anc !== node) anc = this.nodeParent[anc];
-        const isAncestor = anc === node;
+        // 排除自作用：祖先标记在每体遍历开始时一次性置位，查询 O(1)
+        const isAncestor = this.ancestorMark[node] !== 0;
 
         const s = Math.max(nsizeX[node], nsizeY[node], useZ ? nsizeZ[node] : 0);
         if (!isAncestor && s * s < theta2 * d2) {

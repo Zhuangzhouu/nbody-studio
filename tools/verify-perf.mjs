@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const b=await chromium.launch({channel:'msedge',headless:true,args:['--enable-unsafe-swiftshader']});
+const p=await b.newPage({viewport:{width:1440,height:900}});
+const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error'&&!m.text().includes('404'))errs.push(m.text())});
+await p.goto('http://localhost:4173/',{waitUntil:'domcontentloaded'});
+await p.waitForFunction(()=>document.getElementById('boot')?.classList.contains('hidden'),null,{timeout:30000});
+await p.waitForTimeout(1500);
+console.log('engine',await p.locator('#engine-badge').textContent());
+console.log('step',await p.evaluate(()=>window.__nbody.debug().step));
+console.log('perf',await p.evaluate(()=>window.__nbody.debug().perf));
+console.log('errors',errs.length?errs:'(无)');
+await b.close();
