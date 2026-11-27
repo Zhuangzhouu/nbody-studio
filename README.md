@@ -23,8 +23,8 @@ v2 新增：**2D/3D 切换**、**每个天体的 x/y/z、vx/vy/vz、质量、引
 
 | 文件 | 说明 |
 |---|---|
-| `NBodyStudio-2.8.0-x64.exe` | NSIS 安装版，可选安装目录、创建桌面/开始菜单快捷方式 |
-| `NBodyStudio-2.8.0-portable.exe` | 便携版，双击即用、无需安装 |
+| `NBodyStudio-2.8.0-setup.exe`（73 MB） | NSIS 安装版，可选安装目录、创建桌面/开始菜单快捷方式 |
+| `NBodyStudio-2.8.0-win-x64-portable.zip`（103 MB） | 便携绿色版，解压即用、无需安装 |
 
 本地重建：
 

@@ -31,7 +31,7 @@
     "appId": "com.nbodystudio.app",
     "productName": "N-Body Studio",
     "directories": {
-      "output": "release3"
+      "output": "release-installer"
     },
     "files": [
       "dist/**/*",
@@ -40,17 +40,19 @@
     ],
     "win": {
       "target": [
-        "portable"
+        "nsis"
       ],
       "artifactName": "NBodyStudio-${version}-${arch}.${ext}",
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "N-Body Studio"
+      "shortcutName": "N-Body Studio",
+      "artifactName": "NBodyStudio-${version}-setup.exe"
     },
     "portable": {
       "artifactName": "NBodyStudio-${version}-portable.exe"

@@ -1,22 +1,16 @@
-N-Body Studio 2.8.0 — Windows 便携版
-========================================
+N-Body Studio v2.8.0 — Windows 安装包说明
+==========================================
 
-【启动】
-解压本 ZIP 到任意目录，双击「N-Body Studio.exe」即可运行。
-无需安装、无需管理员权限。
+【安装版（推荐）】NBodyStudio-2.8.0-setup.exe （74 MB）
+  双击运行，按向导安装。可选择安装目录、创建桌面与开始菜单快捷方式。
+  无需管理员权限（per-user 安装）。卸载：设置 → 应用 → N-Body Studio。
+
+【便携版】NBodyStudio-2.8.0-win-x64-portable.zip （103 MB）
+  解压到任意目录，双击 N-Body Studio.exe 即用，不写注册表。适合 U 盘携带。
 
 【系统要求】
-Windows 10 / 11，64 位。
+  Windows 10 / 11，x64。无需安装 Node、Python 或其他运行时。
 
-【包含内容】
-N-Body Studio.exe   主程序
-resources/          应用代码与资源
-*.dll               运行库
-locales/            多语言资源
-
-【_usage】
-- 浏览器版：访问 http://localhost:5173（需先 npm run dev）
-- 源码仓库：https://github.com/joe/nbody-studio
-
-【问题反馈】
-请在 GitHub 仓库提 Issue。
+【源码与发行】
+  GitHub: https://github.com/Zhuangzhouu/nbody-studio （Private）
+  Release: https://github.com/Zhuangzhouu/nbody-studio/releases/tag/v2.8.0
