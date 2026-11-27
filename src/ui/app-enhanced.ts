@@ -24,6 +24,7 @@ export interface EnhancedHost {
     width: number;
     height: number;
     starTypes?: Uint8Array | null;
+    weight?: number;
   } | null;
   addBodies(bodies: BodyConfig[]): boolean;
   removeBody(index: number): void;
@@ -317,8 +318,10 @@ export class CanvasInteractions {
     const resolved = starType === 'auto' || starType === undefined ? 'planet' : starType;
     const massUnit = cfg.stellar?.massUnit ?? 1;
     const typeText = resolved === 'planet' ? '' : ` · ${starLabel(resolved as ResolvedStarType)}`;
+    const snapW = this.host.getSnapshot()?.weight ?? 1;
     const rows = [
       `#${b.id ?? hit.index}${typeText}`,
+      ...(snapW > 1 ? [`权重 ${snapW.toFixed(1)} 颗/代表粒子`] : []),
       `m=${b.mass.toFixed(3)} (${physMass(b.mass, cfg.stellar ?? DEFAULT_STELLAR).toFixed(2)} M☉) μ=${(b.grav ?? b.mass).toFixed(3)}`,
       `|v|=${Math.hypot(b.vx, b.vy, b.vz ?? 0).toFixed(3)}`,
       `(${b.x.toFixed(2)}, ${b.y.toFixed(2)}, ${(b.z ?? 0).toFixed(2)})`,

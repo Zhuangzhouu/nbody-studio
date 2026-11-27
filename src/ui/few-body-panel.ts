@@ -347,8 +347,12 @@ export class FewBodyPanel {
       const vy = sv ? sv[i * 3 + 1] : b.vy;
       const vz = sv && useZ ? sv[i * 3 + 2] : (b.vz ?? 0);
       const speed = Math.hypot(vx, vy, vz);
+      // R33/R34：逐体动能与比角动量放进 title，避免破坏 5 列布局
+      const ke = 0.5 * b.mass * (vx * vx + vy * vy + vz * vz);
+      const h = Math.hypot(y * vz - z * vy, z * vx - x * vz, x * vy - y * vx);
       rows.push(
-        `<div class="fb-row"><span>${b.id ?? i}</span><span>${r.toFixed(3)}</span>` +
+        `<div class="fb-row" title="Eₖ=${ke.toFixed(4)} · h=${h.toFixed(4)}">` +
+        `<span>${b.id ?? i}</span><span>${r.toFixed(3)}</span>` +
         `<span>${speed.toFixed(3)}</span><span>${b.mass.toFixed(3)}</span><span>${(b.grav ?? b.mass).toFixed(3)}</span></div>`,
       );
       states.push({ x, y, z, vx, vy, vz });

@@ -31,10 +31,17 @@ export class HelpOverlay {
     close.addEventListener('click', () => this.hide());
     head.append(titleWrap, close);
 
+    // R40：快捷键搜索过滤
+    const search = el('input') as HTMLInputElement;
+    search.type = 'text';
+    search.id = 'help-search';
+    search.placeholder = '搜索快捷键（如 undo / Ctrl）';
+    search.addEventListener('input', () => this.render(search.value.trim().toLowerCase()));
+
     this.body = el('div', 'help-body');
     const foot = el('div', 'help-foot', '输入框聚焦时单键快捷键自动让位；Ctrl / ⌘ 组合键始终可用。');
 
-    panel.append(head, this.body, foot);
+    panel.append(head, search, this.body, foot);
     this.overlay.append(panel);
     this.overlay.addEventListener('click', (e) => {
       if (e.target === this.overlay) this.hide();
@@ -62,11 +69,16 @@ export class HelpOverlay {
     else this.show();
   }
 
-  private render(): void {
+  private render(filter = ''): void {
     this.body.replaceChildren();
     for (const { group, items } of this.manager.groups()) {
+      const matched = filter
+        ? items.filter((it) =>
+            `${it.definition.label} ${it.display} ${it.definition.hint ?? ''}`.toLowerCase().includes(filter))
+        : items;
+      if (!matched.length) continue;
       const section = el('div', 'help-group');
-      const title = el('div', 'help-group-title', `${group} · ${items.length}`);
+      const title = el('div', 'help-group-title', `${group} · ${matched.length}`);
       title.title = '点击折叠 / 展开';
       title.style.cursor = 'pointer';
       section.append(title);
@@ -76,7 +88,7 @@ export class HelpOverlay {
         section.dataset.collapsed = collapsed ? 'false' : 'true';
         grid.style.display = collapsed ? '' : 'none';
       });
-      for (const item of items) {
+      for (const item of matched) {
         const row = el('div', 'help-row');
         const label = el('div', 'help-label');
         label.append(el('span', '', item.definition.label));

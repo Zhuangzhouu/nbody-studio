@@ -215,6 +215,7 @@ class App {
             count: this.snapshot.count,
             dimensions: this.snapshot.dimensions,
             starTypes: this.snapshot.starTypes,
+            weight: this.snapshot.weight,
             width: this.renderer.cssWidth || window.innerWidth,
             height: this.renderer.cssHeight || window.innerHeight,
           }

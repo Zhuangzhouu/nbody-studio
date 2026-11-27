@@ -31,6 +31,13 @@ export class PerformancePanel {
     parent.append(this.root);
   }
 
+  /** R38：重置显示与内部 EMA 状态（EMA 在 Worker 侧，这里仅清显示）。 */
+  reset(): void {
+    this.last = null;
+    this.values.textContent = '—';
+    this.root.style.display = 'none';
+  }
+
   update(s: PerfSample): void {
     this.last = s;
     this.root.style.display = '';

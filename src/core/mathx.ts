@@ -114,3 +114,87 @@ export function mod(a: number, n: number): number {
 export function lerpAngle(a: number, b: number, t: number): number {
   return wrapAngle(a + wrapAngle(b - a) * clamp(t, 0, 1));
 }
+
+/** S1：算术平均；空数组返回 NaN。 */
+export function mean(values: readonly number[]): number {
+  if (!values.length) return NaN;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+/** S2：总体方差（除以 n）。 */
+export function variance(values: readonly number[]): number {
+  if (!values.length) return NaN;
+  const m = mean(values);
+  return values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length;
+}
+
+/** S3：标准差 = √方差。 */
+export function stdDev(values: readonly number[]): number {
+  return Math.sqrt(variance(values));
+}
+
+/** S4：中位数（排序副本，不改原数组）。 */
+export function median(values: readonly number[]): number {
+  if (!values.length) return NaN;
+  const s = [...values].sort((a, b) => a - b);
+  const mid = s.length >> 1;
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+/** S5：分位数（线性插值，q∈[0,1]）。 */
+export function quantile(values: readonly number[], q: number): number {
+  if (!values.length) return NaN;
+  const s = [...values].sort((a, b) => a - b);
+  const pos = clamp(q, 0, 1) * (s.length - 1);
+  const lo = Math.floor(pos);
+  const hi = Math.min(s.length - 1, lo + 1);
+  return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+}
+
+/** S6：求和。 */
+export function sum(values: readonly number[]): number {
+  return values.reduce((a, b) => a + b, 0);
+}
+
+/** S7：返回 [min, max]，空数组返回 [NaN, NaN]。 */
+export function minMax(values: readonly number[]): [number, number] {
+  if (!values.length) return [NaN, NaN];
+  let lo = Infinity, hi = -Infinity;
+  for (const v of values) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  return [lo, hi];
+}
+
+/** S8：滑动平均，窗口长度 ≤0 返回原数组副本。 */
+export function movingAverage(values: readonly number[], window: number): number[] {
+  const w = Math.max(1, Math.floor(window));
+  if (w <= 1) return [...values];
+  const out: number[] = [];
+  let acc = 0;
+  for (let i = 0; i < values.length; i++) {
+    acc += values[i];
+    if (i >= w) acc -= values[i - w];
+    out.push(acc / Math.min(i + 1, w));
+  }
+  return out;
+}
+
+/** S9：归一化到 [0,1]；全相等时返回全 0。 */
+export function normalize(values: readonly number[]): number[] {
+  const [lo, hi] = minMax(values);
+  if (!Number.isFinite(lo) || hi === lo) return values.map(() => 0);
+  return values.map((v) => (v - lo) / (hi - lo));
+}
+
+/** S10：直方图计数，bin = floor((v-lo)/(hi-lo)*bins)，边界值归入最后一 bin。 */
+export function histogram(values: readonly number[], bins: number): number[] {
+  const n = Math.max(1, Math.floor(bins));
+  const out = new Array<number>(n).fill(0);
+  if (!values.length) return out;
+  const [lo, hi] = minMax(values);
+  if (hi === lo) { out[0] = values.length; return out; }
+  for (const v of values) {
+    const b = Math.min(n - 1, Math.floor(((v - lo) / (hi - lo)) * n));
+    out[b]++;
+  }
+  return out;
+}

@@ -22,6 +22,8 @@ export class Hud {
   private fps = $('fps-badge');
   private dt = $('hud-dt');
   private integrator = $('hud-integrator');
+  private virial = $('hud-virial');
+  private escape = $('hud-escape');
 
   private lastFpsUpdate = 0;
   private frames = 0;
@@ -57,6 +59,8 @@ export class Hud {
     this.step.textContent = formatInt(diag.step);
     this.dt.textContent = formatNumber(diag.dtEff ?? 0, 4);
     this.integrator.textContent = diag.integrator ?? '—';
+    this.virial.textContent = diag.virial === null ? '—' : diag.virial.toFixed(3);
+    this.escape.textContent = formatInt(diag.escapeCount);
 
     // I3：物理时钟（Myr 换算 + 演化速率 = ΔMyr / Δ真实秒，EMA 平滑）
     if (stellar) {
