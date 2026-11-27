@@ -48,7 +48,7 @@ export interface StarConfig {
   age?: number;
 }
 
-export type EngineKind = 'direct' | 'barnes-hut' | 'particle-mesh' | 'treepm';
+export type EngineKind = 'direct' | 'barnes-hut' | 'multipole' | 'particle-mesh' | 'treepm';
 
 /** auto 由规模策略决定；其余为强制指定（用户可自行承担性能代价）。 */
 export type EnginePreference = 'auto' | EngineKind;

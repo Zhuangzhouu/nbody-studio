@@ -114,6 +114,8 @@ function engineLabel(engine: Diagnostics['engine']): string {
       return '直接求和 O(N²)';
     case 'barnes-hut':
       return 'Barnes-Hut O(N log N)';
+    case 'multipole':
+      return '四极多极 O(N log N)';
     case 'particle-mesh':
       return '粒子网格 PM';
     case 'treepm':

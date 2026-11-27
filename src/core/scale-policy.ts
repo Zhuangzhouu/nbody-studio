@@ -42,6 +42,7 @@ export interface Strategy {
 const ENGINE_LABEL: Record<EngineKind, string> = {
   direct: '直接求和 O(N²)',
   'barnes-hut': 'Barnes-Hut O(N log N)',
+  multipole: '自适应四极多极 O(N log N)',
   'particle-mesh': '粒子网格 PM O(N+M log M)',
   treepm: 'TreePM 混合 O(N log N + M log M)',
 };

@@ -35,7 +35,7 @@ export interface ValidationResult {
   warnings: string[];
 }
 
-const ENGINES: EnginePreference[] = ['auto', 'direct', 'barnes-hut', 'particle-mesh', 'treepm'];
+const ENGINES: EnginePreference[] = ['auto', 'direct', 'barnes-hut', 'multipole', 'particle-mesh', 'treepm'];
 const SAMPLING: SamplingMode[] = ['auto', 'never', 'always'];
 const DISTRIBUTIONS: DistributionKind[] = ['disc', 'cloud', 'cluster', 'collision', 'grid', 'binary'];
 const INTEGRATORS: IntegratorKind[] = ['verlet', 'rk4', 'yoshida4'];

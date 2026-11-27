@@ -39,6 +39,7 @@ import { resolveCollisions, type CollisionStats } from './collision';
 import { DEFAULT_STELLAR } from './params';
 import { computeEnergy, type EnergyBreakdown } from './energy';
 import { BarnesHutSolver } from './forces/barnes-hut';
+import { MultipoleSolver } from './forces/multipole';
 import { DirectSolver } from './forces/direct';
 import { ParticleMeshSolver } from './forces/particle-mesh';
 import { TreePMSolver } from './forces/treepm';
@@ -75,6 +76,8 @@ function createSolver(strategy: Strategy): ForceSolver {
       return new DirectSolver();
     case 'barnes-hut':
       return new BarnesHutSolver();
+    case 'multipole':
+      return new MultipoleSolver();
     case 'particle-mesh':
       return new ParticleMeshSolver(strategy.gridSize || undefined);
     case 'treepm':

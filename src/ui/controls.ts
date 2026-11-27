@@ -101,7 +101,8 @@ const COLLISIONS: Array<{ value: CollisionMode; label: string }> = [
 const ENGINES: Array<{ value: EnginePreference; label: string }> = [
   { value: 'auto', label: 'auto（按规模自动）' },
   { value: 'direct', label: '直接求和（最精确）' },
-  { value: 'barnes-hut', label: 'Barnes-Hut 树' },
+  { value: 'barnes-hut', label: 'Barnes-Hut 树（单极）' },
+  { value: 'multipole', label: '自适应四极多极（推荐，更快）' },
   { value: 'particle-mesh', label: '粒子网格 PM' },
   { value: 'treepm', label: 'TreePM（近场 BH + 远场 PM）' },
 ];
@@ -1193,5 +1194,6 @@ function fmtMyr(v: number): string {
 function estimateMs(engine: Strategy['engine'], n: number, grid: number): number {
   if (engine === 'direct') return n * n * 1.6e-6 + n * 1e-5;
   if (engine === 'barnes-hut') return n * Math.log2(Math.max(2, n)) * 5.5e-5;
+  if (engine === 'multipole') return n * Math.log2(Math.max(2, n)) * 3.2e-5;
   return n * 4.2e-4 + grid ** 3 * 3e-6;
 }
