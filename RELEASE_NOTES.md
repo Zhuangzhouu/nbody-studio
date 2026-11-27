@@ -33,7 +33,7 @@ Android 版请使用 `android/` 目录的 Capacitor 工程构建，详见 `docs/
 
 ## 源码与仓库
 
-Private 仓库：`https://github.com/joe/nbody-studio`
+公开仓库：`https://github.com/Zhuangzhouu/nbody-studio`（可直接下载）
 
 ```bash
 npm install

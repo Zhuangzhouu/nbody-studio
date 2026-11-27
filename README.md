@@ -14,8 +14,8 @@ v2 新增：**2D/3D 切换**、**每个天体的 x/y/z、vx/vy/vz、质量、引
 
 ### GitHub 仓库
 
-- 地址：`https://github.com/joe/nbody-studio`（Private）
-- 克隆：`git clone https://github.com/joe/nbody-studio.git`
+- 地址：`https://github.com/Zhuangzhouu/nbody-studio`（Public，可直接下载）
+- 克隆：`git clone https://github.com/Zhuangzhouu/nbody-studio.git`
 
 ### Windows 桌面版（.exe）
 
@@ -24,6 +24,9 @@ v2 新增：**2D/3D 切换**、**每个天体的 x/y/z、vx/vy/vz、质量、引
 | 文件 | 说明 |
 |---|---|
 | `NBodyStudio-2.8.0-setup.exe`（73 MB） | NSIS 安装版，可选安装目录、创建桌面/开始菜单快捷方式 |
+
+> **首次运行提示**：安装包未做代码签名，Windows SmartScreen 可能显示「未知发布者」。
+> 在提示框点「更多信息」→「仍要运行」即可。绿色版同理。
 | `NBodyStudio-2.8.0-win-x64-portable.zip`（103 MB） | 便携绿色版，解压即用、无需安装 |
 
 本地重建：
