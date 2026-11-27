@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N-Body Studio · 宣传片</title>
+<style>
+  :root {
+    --bg: #04070e;
+    --ink: #e8f0fa;
+    --dim: #94a3b8;
+    --cyan: #5eead4;
+    --blue: #7dd3fc;
+    --violet: #a78bfa;
+    --gold: #fbbf24;
+    --font: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+    --mono: 'Cascadia Code', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: var(--font); color: var(--ink); }
+  #stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+  #stars { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* ---------------- 场景通用 ---------------- */
+  .scene {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 5vh 6vw;
+    opacity: 0; visibility: hidden;
+    transition: opacity .8s ease;
+  }
+  .scene.active { opacity: 1; visibility: visible; }
+  .scene::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, rgba(30,58,95,.28), transparent 62%);
+    pointer-events: none;
+  }
+  .scene > * { position: relative; z-index: 1; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: clamp(11px, 1.2vw, 15px);
+    letter-spacing: .38em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 2.2vh; opacity: .9;
+  }
+  .title {
+    font-size: clamp(34px, 6.4vw, 92px); font-weight: 700;
+    letter-spacing: -.02em; line-height: 1.08; text-align: center;
+    background: linear-gradient(100deg, #fff 10%, #a5f3fc 55%, #c4b5fd 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .subtitle {
+    font-size: clamp(13px, 1.9vw, 26px); color: var(--dim);
+    text-align: center; margin-top: 2.4vh; line-height: 1.6;
+  }
+  .mono { font-family: var(--mono); }
+
+  /* ---------------- 分镜 1：片头 ---------------- */
+  #s1 .title { font-size: clamp(44px, 9vw, 132px); letter-spacing: -.04em; }
+  #s1 .logo-orbit {
+    width: clamp(90px, 14vh, 150px); height: clamp(90px, 14vh, 150px);
+    border-radius: 50%; margin-bottom: 4vh; position: relative;
+    background: radial-gradient(circle, #fff4d6 0%, #fbbf24 18%, rgba(251,191,36,.12) 42%, transparent 68%);
+    box-shadow: 0 0 60px rgba(251,191,36,.35);
+    animation: pulse 3.4s ease-in-out infinite;
+  }
+  #s1 .logo-orbit::after {
+    content: ''; position: absolute; inset: -22%;
+    border: 1px solid rgba(94,234,212,.35); border-radius: 50%;
+    transform: rotate(-24deg) scaleY(.34);
+    animation: spin 9s linear infinite;
+  }
+  @keyframes pulse { 50% { transform: scale(1.06); filter: brightness(1.15); } }
+  @keyframes spin { to { transform: rotate(336deg) scaleY(.34); } }
+  #s1 .tagline { margin-top: 5vh; font-size: clamp(12px, 1.5vw, 19px); color: var(--dim); letter-spacing: .2em; }
+
+  /* ---------------- 分镜 2：规模 ---------------- */
+  .big-number {
+    font-family: var(--mono); font-weight: 700;
+    font-size: clamp(52px, 10vw, 150px); line-height: 1;
+    color: var(--cyan); text-shadow: 0 0 44px rgba(94,234,212,.35);
+    margin: 2vh 0;
+  }
+  .stat-row { display: flex; gap: 3vw; margin-top: 4vh; flex-wrap: wrap; justify-content: center; }
+  .stat {
+    border: 1px solid rgba(125,211,252,.22); border-radius: 14px;
+    padding: 1.6vh 1.8vw; background: rgba(14,24,40,.55);
+    backdrop-filter: blur(8px); min-width: 15vw; text-align: center;
+  }
+  .stat b { display: block; font-family: var(--mono); font-size: clamp(20px, 3vw, 40px); color: var(--blue); }
+  .stat span { font-size: clamp(10px, 1.1vw, 14px); color: var(--dim); }
+
+  /* ---------------- 分镜 3/4/5/6：截图 + 文案 ---------------- */
+  .split {
+    display: grid; grid-template-columns: 1.12fr .88fr;
+    gap: 5vw; align-items: center; width: 100%; max-width: 1500px;
+  }
+  .split.reverse { grid-template-columns: .88fr 1.12fr; }
+  .shot {
+    width: 100%; border-radius: 16px; overflow: hidden;
+    border: 1px solid rgba(125,211,252,.25);
+    box-shadow: 0 30px 90px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.03) inset;
+    background: #070c16;
+  }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shotbar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 13px; background: rgba(12,20,34,.95);
+    border-bottom: 1px solid rgba(125,211,252,.18);
+    font-family: var(--mono); font-size: 10px; color: var(--dim);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .copy h2 {
+    font-size: clamp(26px, 4vw, 58px); font-weight: 680; line-height: 1.16;
+    background: linear-gradient(100deg, #fff, #a5f3fc);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .copy p { margin-top: 2.4vh; font-size: clamp(12px, 1.55vw, 21px); color: var(--dim); line-height: 1.75; }
+  .bullets { list-style: none; margin-top: 3vh; display: flex; flex-direction: column; gap: 1.5vh; }
+  .bullets li {
+    font-size: clamp(11px, 1.35vw, 18px); color: var(--ink);
+    padding-left: 1.6em; position: relative;
+  }
+  .bullets li::before {
+    content: ''; position: absolute; left: 0; top: .55em;
+    width: .55em; height: .55em; border-radius: 50%;
+    background: var(--cyan); box-shadow: 0 0 10px var(--cyan);
+  }
+
+
+  /* ---------------- 演示流程分镜 ---------------- */
+  .flow {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.8vw; width: 100%; max-width: 1400px; margin-top: 4vh;
+  }
+  .step {
+    border: 1px solid rgba(94,234,212,.28); border-radius: 16px;
+    padding: 2.6vh 1.8vw; background: linear-gradient(160deg, rgba(16,30,48,.9), rgba(8,14,25,.92));
+    position: relative; text-align: left;
+  }
+  .step .num {
+    position: absolute; top: -18px; left: 22px;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--cyan); color: #062018;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-weight: 700; font-size: 18px;
+    box-shadow: 0 0 24px rgba(94,234,212,.5);
+  }
+  .step .k { font-family: var(--mono); font-size: 11px; color: var(--cyan); letter-spacing: .18em; }
+  .step h3 { font-size: clamp(18px, 2.4vw, 33px); margin: 1.4vh 0 .8vh; }
+  .step p { font-size: clamp(11px, 1.3vw, 17px); color: var(--dim); line-height: 1.65; }
+  .step .hint {
+    margin-top: 1.4vh; font-family: var(--mono); font-size: clamp(10px, 1.1vw, 14px);
+    color: var(--blue); background: rgba(125,211,252,.08);
+    border-left: 2px solid var(--blue); padding: .7em .9em; border-radius: 0 6px 6px 0;
+  }
+  .flow-shot { max-width: 900px; margin: 3vh auto 0; }
+
+  /* ---------------- 分镜 3：引擎卡片 ---------------- */
+  .engine-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1.6vw; width: 100%; max-width: 1400px; margin-top: 5vh;
+  }
+  .engine {
+    border: 1px solid rgba(125,211,252,.2); border-radius: 16px;
+    padding: 2.4vh 1.6vw; background: linear-gradient(160deg, rgba(20,32,52,.8), rgba(9,15,26,.85));
+    text-align: left; position: relative; overflow: hidden;
+  }
+  .engine::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(var(--cyan), var(--violet));
+  }
+  .engine .k { font-family: var(--mono); font-size: clamp(9px, 1vw, 13px); color: var(--cyan); letter-spacing: .16em; }
+  .engine h3 { font-size: clamp(16px, 2.2vw, 31px); margin: 1.2vh 0; }
+  .engine .c { font-family: var(--mono); font-size: clamp(10px, 1.15vw, 15px); color: var(--blue); }
+  .engine .n { font-size: clamp(9px, 1.05vw, 14px); color: var(--dim); margin-top: 1.2vh; }
+
+  /* ---------------- 分镜 5：光谱带 ---------------- */
+  .spectrum { display: flex; gap: 6px; margin-top: 4vh; flex-wrap: wrap; justify-content: center; }
+  .spec {
+    width: clamp(38px, 6.4vw, 88px); padding: 1.4vh 0; text-align: center;
+    border-radius: 9px; font-family: var(--mono); font-weight: 700;
+    font-size: clamp(13px, 2vw, 27px); color: #0b1220;
+  }
+
+  /* ---------------- 分镜 7：功能网格 ---------------- */
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.4vw; width: 100%; max-width: 1300px; margin-top: 4vh;
+  }
+  .feature {
+    border: 1px solid rgba(167,139,250,.25); border-radius: 14px;
+    padding: 2vh 1.6vw; background: rgba(15,22,40,.7);
+    font-size: clamp(11px, 1.35vw, 18px); color: var(--ink);
+    display: flex; align-items: center; gap: .8em;
+  }
+  .feature .ico { color: var(--violet); font-family: var(--mono); }
+
+  /* ---------------- 分镜 8：片尾 ---------------- */
+  #s8 .title { font-size: clamp(40px, 7.6vw, 108px); }
+  .stack {
+    display: flex; gap: 1.4vw; flex-wrap: wrap; justify-content: center;
+    margin-top: 5vh; font-family: var(--mono); font-size: clamp(10px, 1.25vw, 17px);
+  }
+  .stack span {
+    border: 1px solid rgba(94,234,212,.3); border-radius: 999px;
+    padding: .7em 1.4em; color: var(--cyan); background: rgba(94,234,212,.06);
+  }
+  .end-note { margin-top: 6vh; font-size: clamp(11px, 1.4vw, 19px); color: var(--dim); letter-spacing: .12em; }
+
+  /* ---------------- 进场动画 ---------------- */
+  .rise { opacity: 0; transform: translateY(26px); }
+  .scene.active .rise { animation: riseIn .85s cubic-bezier(.2,.8,.25,1) forwards; }
+  .scene.active .rise.d1 { animation-delay: .12s; }
+  .scene.active .rise.d2 { animation-delay: .28s; }
+  .scene.active .rise.d3 { animation-delay: .44s; }
+  .scene.active .rise.d4 { animation-delay: .6s; }
+  @keyframes riseIn { to { opacity: 1; transform: translateY(0); } }
+
+  /* ---------------- 控制条 ---------------- */
+  #ui {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 24px 16px;
+    background: linear-gradient(transparent, rgba(2,5,11,.9));
+    font-family: var(--mono); font-size: 12px; color: var(--dim);
+  }
+  #ui button {
+    background: rgba(94,234,212,.1); border: 1px solid rgba(94,234,212,.35);
+    color: var(--cyan); border-radius: 8px; padding: 7px 13px; cursor: pointer;
+    font-family: var(--mono); font-size: 12px;
+  }
+  #ui button:hover { background: rgba(94,234,212,.2); }
+  #bar { flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); overflow: hidden; }
+  #fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--violet)); }
+  #chapters { display: flex; gap: 5px; }
+  #chapters i { width: 16px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.16); cursor: pointer; }
+  #chapters i.on { background: var(--cyan); }
+  body.recording #ui { display: none; }
+
+  @media (max-width: 900px) {
+    .split, .split.reverse { grid-template-columns: 1fr; gap: 3vh; }
+    .engine-grid, .feature-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="stars"></canvas>
+
+  <!-- 1 片头 -->
+  <section class="scene" id="s1" data-dur="6.5">
+    <div class="logo-orbit rise"></div>
+    <div class="eyebrow rise d1">Interactive Gravity Simulator</div>
+    <h1 class="title rise d2">N-Body Studio</h1>
+    <div class="subtitle rise d3">在浏览器里，运行一个宇宙</div>
+    <div class="tagline rise d4 mono">1 → 2,147,483,647 颗恒星 · 2D / 3D · 零运行时依赖</div>
+  </section>
+
+  <!-- 2 规模 -->
+  <section class="scene" id="s2" data-dur="7">
+    <div class="eyebrow rise">Scale Without Limits</div>
+    <h2 class="title rise d1">从一颗星，到整个星系</h2>
+    <div class="big-number rise d2" id="counter">1</div>
+    <div class="stat-row rise d3">
+      <div class="stat"><b>3</b><span>精确求解引擎</span></div>
+      <div class="stat"><b>3D</b><span>CIC + FFT 粒子网格</span></div>
+      <div class="stat"><b>185 ms</b><span>百万体单步实测</span></div>
+    </div>
+  </section>
+
+  <!-- 3 引擎 -->
+  <section class="scene" id="s3" data-dur="7.5">
+    <div class="eyebrow rise">Adaptive Engine Selection</div>
+    <h2 class="title rise d1">四档引擎，按规模自动切换</h2>
+    <div class="engine-grid rise d2">
+      <div class="engine"><div class="k">DIRECT</div><h3>直接求和</h3><div class="c">O(N²)</div><div class="n">≤ 2,048 体 · 逐体精确</div></div>
+      <div class="engine"><div class="k">BARNES–HUT</div><h3>八叉树</h3><div class="c">O(N log N)</div><div class="n">≤ 20,000 体 · 可调 θ</div></div>
+      <div class="engine"><div class="k">PARTICLE–MESH</div><h3>粒子网格</h3><div class="c">O(N + M log M)</div><div class="n">≤ 2,000,000 体 · 三维 FFT</div></div>
+      <div class="engine"><div class="k">TREEPM</div><h3>混合引擎</h3><div class="c">近场 + 远场</div><div class="n">≥ 20,000 体 · 精度兼得</div></div>
+    </div>
+  </section>
+
+  <!-- 4 主界面 -->
+  <section class="scene" id="s4" data-dur="8">
+    <div class="split">
+      <div class="shot rise d1">
+        <div class="shotbar"><i class="dot" style="background:#fb7185"></i><i class="dot" style="background:#fbbf24"></i><i class="dot" style="background:#5eead4"></i><span style="margin-left:8px">N-Body Studio — 星系对撞</span></div>
+        <img src="assets/main.png" alt="主界面">
+      </div>
+      <div class="copy rise d2">
+        <div class="eyebrow">Full Controls</div>
+        <h2>每一个参数<br>都在你手里</h2>
+        <ul class="bullets">
+          <li>质量、初始位置与速度、引力常数、时间步长</li>
+          <li>精度、积分器、碰撞处理、轨迹显示</li>
+          <li>暂停 / 单步 / 重置 / 0.05–16× 倍速</li>
+          <li>57 项快捷键，覆盖模拟、相机、配置全流程</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 演示流程 -->
+  <section class="scene" id="sDemo" data-dur="9">
+    <div class="eyebrow rise">Three Steps To Orbit</div>
+    <h2 class="title rise d1">三步，开始你的模拟</h2>
+    <div class="flow rise d2">
+      <div class="step"><div class="num">1</div><div class="k">SETUP</div><h3>选一个构型</h3><p>在「预设场景」或「★ 1–10 体工作台」里选择经典构型，或逐条录入天体数据。</p><div class="hint">figure-8 / 双星 / 恒星 + 行星</div></div>
+      <div class="step"><div class="num">2</div><div class="k">TUNE</div><h3>调物理参数</h3><p>设置质量、初速、引力常数 G、时间步长 dt、精度 θ 与碰撞处理方式。</p><div class="hint">3D 八叉树 / 零软化 / Verlet</div></div>
+      <div class="step"><div class="num">3</div><div class="k">RUN</div><h3>运行与观察</h3><p>播放、暂停、单步、倍速；查看能量漂移、轨道要素与恒星演化事件流。</p><div class="hint">Space / → / F / 57 项快捷键</div></div>
+    </div>
+    <div class="shot flow-shot rise d3">
+      <div class="shotbar"><i class="dot" style="background:#fb7185"></i><i class="dot" style="background:#fbbf24"></i><i class="dot" style="background:#5eead4"></i><span style="margin-left:8px">实际操作：1–10 体工作台 → 星系盘</span></div>
+      <img src="assets/demo-2.png" alt="演示流程">
+    </div>
+  </section>
+
+  <!-- 5 少体工作台 -->
+  <section class="scene" id="s5" data-dur="8">
+    <div class="split reverse">
+      <div class="copy rise d1">
+        <div class="eyebrow">Few-Body Workbench</div>
+        <h2>1–10 体<br>精确至上</h2>
+        <ul class="bullets">
+          <li>figure-8 三体、拉格朗日三角等经典构型</li>
+          <li>直接求和 + 零软化 + 无采样，一键精确模式</li>
+          <li>实时轨道要素：a / e / T / |L| / 能量漂移</li>
+        </ul>
+      </div>
+      <div class="shot rise d2">
+        <div class="shotbar"><i class="dot" style="background:#fb7185"></i><i class="dot" style="background:#fbbf24"></i><i class="dot" style="background:#5eead4"></i><span style="margin-left:8px">★ 1–10 体工作台</span></div>
+        <img src="assets/fewbody.png" alt="少体工作台">
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 恒星演化 -->
+  <section class="scene" id="s6" data-dur="9">
+    <div class="eyebrow rise">Stellar Evolution</div>
+    <h2 class="title rise d1">恒星，也有生命周期</h2>
+    <div class="spectrum rise d2">
+      <div class="spec" style="background:#9bb0ff">O</div>
+      <div class="spec" style="background:#aabfff">B</div>
+      <div class="spec" style="background:#cad7ff">A</div>
+      <div class="spec" style="background:#f8f7ff">F</div>
+      <div class="spec" style="background:#fff4ea">G</div>
+      <div class="spec" style="background:#ffd2a1">K</div>
+      <div class="spec" style="background:#ffcc6f">M</div>
+      <div class="spec" style="background:#cfe0ff">WD</div>
+      <div class="spec" style="background:#ccddff">NS</div>
+      <div class="spec" style="background:#ffaa33">BH</div>
+    </div>
+    <div class="subtitle rise d3">寿命 t = 10000·M⁻²·⁵ Myr · 超新星冲击波 · 白矮星 / 中子星 / 黑洞遗骸</div>
+    <div class="shot rise d3" style="max-width:760px;margin-top:3vh">
+      <div class="shotbar"><i class="dot" style="background:#fb7185"></i><i class="dot" style="background:#fbbf24"></i><i class="dot" style="background:#5eead4"></i><span style="margin-left:8px">恒星光谱渲染 · 事件流</span></div>
+      <img src="assets/stellar.png" alt="恒星演化">
+    </div>
+  </section>
+
+  <!-- 7 工程能力 -->
+  <section class="scene" id="s7" data-dur="7">
+    <div class="eyebrow rise">Engineering</div>
+    <h2 class="title rise d1">不只是模拟器</h2>
+    <div class="feature-grid rise d2">
+      <div class="feature"><span class="ico">▤</span> JSON 完整配置导入导出</div>
+      <div class="feature"><span class="ico">↗</span> URL 一键分享场景</div>
+      <div class="feature"><span class="ico">●</span> WEBM 画面录制</div>
+      <div class="feature"><span class="ico">⌘</span> 57 项快捷键</div>
+      <div class="feature"><span class="ico">↶</span> 配置撤销 / 重做</div>
+      <div class="feature"><span class="ico">✓</span> 103 项自动化单元测试</div>
+    </div>
+  </section>
+
+  <!-- 8 片尾 -->
+  <section class="scene" id="s8" data-dur="7">
+    <h1 class="title rise">N-Body Studio</h1>
+    <div class="subtitle rise d1">TypeScript + Vite + WebGL2 + Web Worker</div>
+    <div class="stack rise d2">
+      <span>Zero Runtime Dependencies</span>
+      <span>2D / 3D</span>
+      <span>WebGL2 HDR</span>
+      <span>Vitest · Playwright</span>
+    </div>
+    <div class="end-note rise d3 mono">Open your browser. Start a universe.</div>
+  </section>
+</div>
+
+<div id="ui">
+  <button id="btn-play">⏸ 暂停</button>
+  <span id="time">0:00 / 0:00</span>
+  <div id="bar"><div id="fill"></div></div>
+  <div id="chapters"></div>
+  <button id="btn-restart">↻ 重播</button>
+</div>
+
+<script>
+(function () {
+  const scenes = Array.from(document.querySelectorAll('.scene'));
+  const durations = scenes.map(s => parseFloat(s.dataset.dur));
+  const total = durations.reduce((a, b) => a + b, 0);
+  const starts = [];
+  durations.reduce((acc, d, i) => { starts[i] = acc; return acc + d; }, 0);
+
+  const counters = document.getElementById('counter');
+  const fill = document.getElementById('fill');
+  const timeLabel = document.getElementById('time');
+  const chapters = document.getElementById('chapters');
+  const playBtn = document.getElementById('btn-play');
+  const restartBtn = document.getElementById('btn-restart');
+
+  scenes.forEach((_, i) => {
+    const dot = document.createElement('i');
+    dot.title = `场景 ${i + 1}`;
+    dot.addEventListener('click', () => { current = starts[i] + 0.01; last = performance.now(); });
+    chapters.append(dot);
+  });
+  const dots = Array.from(chapters.children);
+
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  let current = 0;
+  let playing = true;
+  let last = performance.now();
+  let activeIndex = -1;
+  let counted = false;
+
+  function render(t) {
+    let idx = scenes.length - 1;
+    for (let i = 0; i < starts.length; i++) if (t < starts[i] + durations[i]) { idx = i; break; }
+
+    if (idx !== activeIndex) {
+      scenes.forEach((s, i) => s.classList.toggle('active', i === idx));
+      activeIndex = idx;
+      dots.forEach((d, i) => d.classList.toggle('on', i === idx));
+      // 重启 CSS 进场动画
+      const sc = scenes[idx];
+      sc.querySelectorAll('.rise').forEach(el => {
+        el.style.animation = 'none';
+        void el.offsetHeight;
+        el.style.animation = '';
+      });
+    }
+
+    // 场景 2 数字滚动
+    if (idx === 1) {
+      const p = Math.min(1, (t - starts[1]) / (durations[1] * 0.72));
+      const eased = 1 - Math.pow(1 - p, 3);
+      counters.textContent = Math.max(1, Math.round(eased * 2147483647)).toLocaleString('en-US');
+      counted = true;
+    } else if (counted) {
+      counters.textContent = '2,147,483,647';
+    }
+
+    fill.style.width = `${Math.min(100, (t / total) * 100)}%`;
+    timeLabel.textContent = `${fmt(t)} / ${fmt(total)}`;
+
+    if (t >= total) { playing = false; playBtn.textContent = '▶ 播放'; }
+  }
+
+  function frame(now) {
+    if (playing) {
+      current += Math.min(0.1, (now - last) / 1000);
+      if (current >= total) current = total - 0.001;
+    }
+    last = now;
+    render(current);
+    requestAnimationFrame(frame);
+  }
+
+  playBtn.addEventListener('click', () => {
+    playing = !playing;
+    playBtn.textContent = playing ? '⏸ 暂停' : '▶ 播放';
+    last = performance.now();
+  });
+  restartBtn.addEventListener('click', () => {
+    current = 0; playing = true; activeIndex = -1; counted = false;
+    playBtn.textContent = '⏸ 暂停'; last = performance.now();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
+    if (e.code === 'ArrowRight') current = Math.min(total - .01, current + 5);
+    if (e.code === 'ArrowLeft') current = Math.max(0, current - 5);
+  });
+
+  // 星空背景
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0, stars = [];
+  function resize() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.min(420, Math.round(W * H / 3600));
+    stars = Array.from({ length: count }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.5 + .3,
+      a: Math.random() * .6 + .15,
+      s: Math.random() * .35 + .04,
+      ph: Math.random() * Math.PI * 2,
+    }));
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  let starT = 0;
+  function drawStars() {
+    starT += 0.016;
+    ctx.clearRect(0, 0, W, H);
+    const g = ctx.createRadialGradient(W * .5, H * .45, 0, W * .5, H * .45, Math.max(W, H) * .7);
+    g.addColorStop(0, '#0a1424');
+    g.addColorStop(1, '#04070e');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    for (const s of stars) {
+      s.y += s.s;
+      if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+      const tw = .65 + .35 * Math.sin(starT * 1.8 + s.ph);
+      ctx.globalAlpha = s.a * tw;
+      ctx.fillStyle = s.r > 1.2 ? '#a5f3fc' : '#cbd5e1';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
+
+  // 录制模式：?record=1 隐藏控制条并从头播放
+  if (new URLSearchParams(location.search).has('record')) {
+    document.body.classList.add('recording');
+    current = 0; playing = true; last = performance.now();
+  }
+
+  // 暴露给录制脚本
+  window.__promo = {
+    get total() { return total; },
+    get current() { return current; },
+    seek(t) { current = Math.max(0, Math.min(total - .01, t)); last = performance.now(); render(current); },
+    play() { playing = true; last = performance.now(); },
+    pause() { playing = false; },
+  };
+
+  render(0);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

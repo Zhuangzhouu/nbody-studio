@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>N-Body Studio · 多星引力运动模拟</title>
+    <meta
+      name="description"
+      content="浏览器内多体引力模拟：直接求和 / Barnes-Hut / 粒子网格三级引擎，支持百万级天体。"
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%23ffd166'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%2360a5fa' stroke-width='1.6' transform='rotate(-28 16 16)'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <canvas id="stage" aria-label="引力模拟视口"></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div class="brand-text">
+            <h1>N-Body Studio</h1>
+            <p>多星引力运动模拟器</p>
+          </div>
+        </div>
+        <div class="topbar-meta">
+          <button id="btn-help" class="badge badge--help" type="button" title="快捷键帮助 (?)">⌘ 快捷键</button>
+          <div id="engine-badge" class="badge badge--engine" title="当前求解引擎">初始化中</div>
+          <div id="fps-badge" class="badge badge--fps" title="渲染帧率 / 单步耗时">-- FPS</div>
+        </div>
+      </header>
+
+      <aside id="panel" class="panel" aria-label="模拟参数面板">
+        <div class="panel-scroll" id="panel-body"></div>
+        <div class="panel-foot">
+          <div class="transport">
+            <button id="btn-play" class="btn btn--primary" type="button" title="播放 / 暂停 (Space)">
+              <span class="ico" id="ico-play">⏸</span><span id="lbl-play">暂停</span>
+            </button>
+            <button id="btn-step" class="btn" type="button" title="单步推进 (→)">单步</button>
+            <button id="btn-reset" class="btn" type="button" title="重置初始条件 (R)">重置</button>
+          </div>
+          <label class="speed-row" for="speed">
+            <span class="speed-label">速度 <b id="speed-value">1.0×</b></span>
+            <input id="speed" type="range" min="0.05" max="16" step="0.05" value="1" />
+          </label>
+          <div class="foot-hint">空格 暂停 · R 重置 · 拖拽平移 · 滚轮缩放 · F 自适应</div>
+        </div>
+      </aside>
+
+      <footer class="hud" id="hud" aria-live="polite">
+        <div class="hud-item"><span class="hud-k">天体数</span><span class="hud-v" id="hud-n">0</span></div>
+        <div class="hud-item"><span class="hud-k">模拟时间</span><span class="hud-v" id="hud-t">0.00</span></div>
+        <div class="hud-item" title="I3：物理时间 = 模拟时间 ÷ timeUnit；速率为当前速度下每真实秒推进的 Myr。"><span class="hud-k">物理时间</span><span class="hud-v" id="hud-myr">0.00 Myr · 0/s</span></div>
+        <div class="hud-item"><span class="hud-k">步数</span><span class="hud-v" id="hud-step">0</span></div>
+        <div class="hud-item"><span class="hud-k">总能量</span><span class="hud-v" id="hud-energy">—</span></div>
+        <div class="hud-item" title="相对初始总能量的变化。开启并合/碰撞时动能会被耗散，这属于物理过程而非积分误差。"><span class="hud-k">能量变化</span><span class="hud-v" id="hud-drift">—</span></div>
+        <div class="hud-item"><span class="hud-k">并合</span><span class="hud-v" id="hud-merge">0</span></div>
+      </footer>
+
+      <div id="toast-host" class="toast-host" aria-live="assertive"></div>
+      <div id="boot" class="boot"><div class="boot-spinner"></div><span>正在装载物理内核…</span></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

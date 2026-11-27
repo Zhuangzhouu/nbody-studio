@@ -1,0 +1,44 @@
+# 依赖与构建产物
+node_modules/
+dist/
+out/
+build/
+*.local
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 临时工具（gh CLI 下载目录）
+.tools/
+
+# 测试截图与导出产物（源码与文档保留）
+shots/*.png
+shots2/*.png
+shots3/*.png
+shots4/*.png
+shots-all/
+showcase/assets/*.png
+showcase/*.webm
+showcase/*.mp4
+
+# 打包产物（发行时单独上传，不入库）
+*.exe
+*.apk
+*.msi
+*.dmg
+release/
+
+# Android 构建缓存（工程源码保留）
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+*.iml
+release2/
+
+release3/
+
+dist-packages/*.zip

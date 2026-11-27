@@ -1,0 +1,22 @@
+N-Body Studio 2.8.0 — Windows 便携版
+========================================
+
+【启动】
+解压本 ZIP 到任意目录，双击「N-Body Studio.exe」即可运行。
+无需安装、无需管理员权限。
+
+【系统要求】
+Windows 10 / 11，64 位。
+
+【包含内容】
+N-Body Studio.exe   主程序
+resources/          应用代码与资源
+*.dll               运行库
+locales/            多语言资源
+
+【_usage】
+- 浏览器版：访问 http://localhost:5173（需先 npm run dev）
+- 源码仓库：https://github.com/joe/nbody-studio
+
+【问题反馈】
+请在 GitHub 仓库提 Issue。

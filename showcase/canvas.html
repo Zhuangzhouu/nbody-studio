@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>N-Body Studio · Canvas 录制版</title>
+<style>
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#04070e}
+  canvas{display:block;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function () {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const W = 1440, H = 810;
+  canvas.width = W; canvas.height = H;
+
+  const FONT = "'Segoe UI','Microsoft YaHei',system-ui,sans-serif";
+  const MONO = "'Cascadia Code','Consolas',monospace";
+  const CYAN = '#5eead4', BLUE = '#7dd3fc', VIOLET = '#a78bfa', GOLD = '#fbbf24', DIM = '#94a3b8', INK = '#e8f0fa';
+
+  const durations = [6.5, 7, 7.5, 8, 9, 8, 9, 7, 7];
+  const starts = [];
+  durations.reduce((a, d, i) => { starts[i] = a; return a + d; }, 0);
+  const TOTAL = durations.reduce((a, b) => a + b, 0);
+
+  // 图片
+  const images = {};
+  const sources = {
+    main: 'assets/main.png',
+    fewbody: 'assets/fewbody.png',
+    stellar: 'assets/stellar.png',
+    million: 'assets/million.png',
+    threed: 'assets/3d.png',
+    demo: 'assets/demo-2.png',
+  };
+  let loaded = 0;
+  const totalImgs = Object.keys(sources).length;
+  for (const [k, src] of Object.entries(sources)) {
+    const im = new Image();
+    im.onload = () => { images[k] = im; loaded++; };
+    im.onerror = () => { loaded++; };
+    im.src = src;
+  }
+
+  // 星空
+  let seed = 20261126;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const stars = Array.from({ length: 380 }, () => ({
+    x: rnd() * W, y: rnd() * H, r: rnd() * 1.5 + .35,
+    a: rnd() * .6 + .15, s: rnd() * .32 + .04, ph: rnd() * 6.28,
+  }));
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function ease(p) { return 1 - Math.pow(1 - clamp(p, 0, 1), 3); }
+
+  function sceneAlpha(t, i) {
+    const s = starts[i], d = durations[i];
+    if (t < s || t > s + d) return 0;
+    return Math.min(ease((t - s) / 0.9), ease((s + d - t) / 0.9));
+  }
+
+  function text(str, x, y, size, color, align = 'center', weight = 400, font = FONT) {
+    ctx.font = `${weight} ${size}px ${font}`;
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(str, x, y);
+  }
+
+  function gradientTitle(str, x, y, size, weight = 700) {
+    ctx.font = `${weight} ${size}px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const g = ctx.createLinearGradient(x - size * str.length * .3, 0, x + size * str.length * .3, 0);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(.55, '#a5f3fc');
+    g.addColorStop(1, '#c4b5fd');
+    ctx.fillStyle = g;
+    ctx.fillText(str, x, y);
+  }
+
+  function eyebrow(str, y) {
+    ctx.save();
+    ctx.font = `600 15px ${MONO}`;
+    ctx.fillStyle = CYAN;
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = .95;
+    // 字间距
+    let x = W / 2 - ctx.measureText(str.split('').join(' ')).width / 2;
+    for (const ch of str.split('')) {
+      ctx.fillText(ch, x, y);
+      x += ctx.measureText(ch + ' ').width;
+    }
+    ctx.restore();
+  }
+
+  function panel(x, y, w, h, fill = 'rgba(14,24,40,.72)', stroke = 'rgba(125,211,252,.22)') {
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1;
+    roundRect(ctx, x, y, w, h, 14);
+    ctx.fill(); ctx.stroke();
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function drawImageCover(im, x, y, w, h) {
+    if (!im) {
+      ctx.fillStyle = '#0a1220';
+      roundRect(ctx, x, y, w, h, 12); ctx.fill();
+      return;
+    }
+    const scale = Math.max(w / im.width, h / im.height);
+    const sw = w / scale, sh = h / scale;
+    const sx = (im.width - sw) / 2, sy = (im.height - sh) / 2;
+    ctx.save();
+    roundRect(ctx, x, y, w, h, 12);
+    ctx.clip();
+    ctx.drawImage(im, sx, sy, sw, sh, x, y, w, h);
+    ctx.restore();
+  }
+
+  function windowFrame(im, x, y, w, h, label) {
+    panel(x - 6, y - 40, w + 12, h + 52, 'rgba(9,15,26,.96)', 'rgba(125,211,252,.28)');
+    ['#fb7185', '#fbbf24', '#5eead4'].forEach((c, i) => {
+      ctx.fillStyle = c;
+      ctx.beginPath(); ctx.arc(x + 12 + i * 20, y - 20, 5, 0, 6.28); ctx.fill();
+    });
+    text(label, x + 82, y - 20, 12, DIM, 'left', 400, MONO);
+    drawImageCover(im, x, y, w, h);
+    ctx.strokeStyle = 'rgba(125,211,252,.2)';
+    roundRect(ctx, x, y, w, h, 12); ctx.stroke();
+  }
+
+  function background(t) {
+    const g = ctx.createRadialGradient(W * .5, H * .44, 0, W * .5, H * .44, W * .75);
+    g.addColorStop(0, '#0b1525');
+    g.addColorStop(.55, '#060c17');
+    g.addColorStop(1, '#04070e');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    for (const s of stars) {
+      const y = (s.y + t * s.s * 60) % (H + 4);
+      const tw = .65 + .35 * Math.sin(t * 1.8 + s.ph);
+      ctx.globalAlpha = s.a * tw;
+      ctx.fillStyle = s.r > 1.2 ? '#a5f3fc' : '#cbd5e1';
+      ctx.beginPath(); ctx.arc(s.x, y, s.r, 0, 6.28); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- 分镜绘制 ----
+  function s1(t, p) {
+    const a = ease(p / .55);
+    ctx.save(); ctx.globalAlpha = a;
+    const cx = W / 2, cy = H / 2 - 70;
+    // 发光核心
+    const grd = ctx.createRadialGradient(cx, cy - 40, 0, cx, cy - 40, 110);
+    grd.addColorStop(0, 'rgba(255,244,214,.9)');
+    grd.addColorStop(.18, 'rgba(251,191,36,.75)');
+    grd.addColorStop(.45, 'rgba(251,191,36,.1)');
+    grd.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(cx, cy - 40, 110, 0, 6.28); ctx.fill();
+    ctx.strokeStyle = 'rgba(94,234,212,.35)'; ctx.lineWidth = 1.5;
+    ctx.save(); ctx.translate(cx, cy - 40); ctx.rotate(-.42 + t * .08); ctx.scale(1, .32);
+    ctx.beginPath(); ctx.arc(0, 0, 95, 0, 6.28); ctx.stroke(); ctx.restore();
+
+    eyebrow('INTERACTIVE GRAVITY SIMULATOR', cy + 75);
+    gradientTitle('N-Body Studio', cx, cy + 155, 104);
+    text('在浏览器里，运行一个宇宙', cx, cy + 240, 25, DIM);
+    text('1 → 2,147,483,647 颗恒星   ·   2D / 3D   ·   零运行时依赖', cx, cy + 300, 16, CYAN, 'center', 400, MONO);
+    ctx.restore();
+  }
+
+  function s2(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .5);
+    eyebrow('SCALE WITHOUT LIMITS', 150);
+    gradientTitle('从一颗星，到整个星系', W / 2, 235, 64);
+    const prog = ease((t - starts[1]) / (durations[1] * .72));
+    const n = Math.max(1, Math.round(prog * 2147483647)).toLocaleString('en-US');
+    ctx.shadowColor = 'rgba(94,234,212,.5)'; ctx.shadowBlur = 44;
+    text(n, W / 2, 390, 112, CYAN, 'center', 700, MONO);
+    ctx.shadowBlur = 0;
+    const stats = [['3', '精确求解引擎'], ['3D', 'CIC + FFT 粒子网格'], ['185 ms', '百万体单步实测']];
+    stats.forEach(([v, label], i) => {
+      const x = W / 2 - 430 + i * 305;
+      panel(x, 500, 275, 105);
+      text(v, x + 137, 538, 34, BLUE, 'center', 700, MONO);
+      text(label, x + 137, 578, 14, DIM);
+    });
+    ctx.restore();
+  }
+
+  function s3(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .5);
+    eyebrow('ADAPTIVE ENGINE SELECTION', 140);
+    gradientTitle('四档引擎，按规模自动切换', W / 2, 215, 62);
+    const engines = [
+      ['DIRECT', '直接求和', 'O(N²)', '≤ 2,048 体 · 逐体精确'],
+      ['BARNES–HUT', '八叉树', 'O(N log N)', '≤ 20,000 体 · 可调 θ'],
+      ['PARTICLE–MESH', '粒子网格', 'O(N + M log M)', '≤ 2,000,000 体 · 三维 FFT'],
+      ['TREEPM', '混合引擎', '近场 + 远场', '≥ 20,000 体 · 精度兼得'],
+    ];
+    engines.forEach(([k, name, c, note], i) => {
+      const appear = ease((p - .12 - i * .13) / .3);
+      if (appear <= 0) return;
+      ctx.save(); ctx.globalAlpha = ease(p / .5) * appear;
+      const x = 90 + i * 320, y = 320;
+      panel(x, y, 295, 250, 'rgba(16,27,46,.86)');
+      ctx.fillStyle = CYAN; ctx.fillRect(x, y, 3, 250);
+      text(k, x + 24, y + 40, 13, CYAN, 'left', 600, MONO);
+      text(name, x + 24, y + 95, 30, INK, 'left', 680);
+      text(c, x + 24, y + 150, 17, BLUE, 'left', 400, MONO);
+      text(note, x + 24, y + 200, 13, DIM, 'left');
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  function s4(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .5);
+    windowFrame(images.main, 90, 215, 740, 415, 'N-Body Studio — 星系对撞');
+    const x = 900;
+    text('FULL CONTROLS', x, 235, 15, CYAN, 'left', 600, MONO);
+    text('每一个参数', x, 300, 50, INK, 'left', 680);
+    text('都在你手里', x, 360, 50, INK, 'left', 680);
+    const bullets = [
+      '质量、初始位置与速度、引力常数、时间步长',
+      '精度、积分器、碰撞处理、轨迹显示',
+      '暂停 / 单步 / 重置 / 0.05–16× 倍速',
+      '57 项快捷键，覆盖模拟、相机、配置全流程',
+    ];
+    bullets.forEach((b, i) => {
+      const y = 445 + i * 55;
+      ctx.fillStyle = CYAN;
+      ctx.beginPath(); ctx.arc(x + 6, y, 5, 0, 6.28); ctx.fill();
+      text(b, x + 24, y, 17, INK, 'left');
+    });
+    ctx.restore();
+  }
+
+
+  function sDemo(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .5);
+    eyebrow('THREE STEPS TO ORBIT', 118);
+    gradientTitle('三步，开始你的模拟', W / 2, 185, 60);
+    const steps = [
+      ['SETUP', '选一个构型', '在「预设场景」或「1–10 体工作台」选择经典构型，或逐条录入天体数据。', 'figure-8 / 双星 / 恒星 + 行星'],
+      ['TUNE', '调物理参数', '设置质量、初速、引力常数 G、时间步长 dt、精度 θ 与碰撞处理。', '3D 八叉树 / 零软化 / Verlet'],
+      ['RUN', '运行与观察', '播放、暂停、单步、倍速；查看能量漂移、轨道要素与演化事件流。', 'Space / → / F / 57 项快捷键'],
+    ];
+    steps.forEach(([k, title, desc, hint], i) => {
+      const appear = ease((p - .1 - i * .14) / .3);
+      ctx.save(); ctx.globalAlpha = ease(p / .5) * appear;
+      const x = 90 + i * 430, y = 255;
+      panel(x, y, 400, 220, 'rgba(16,30,48,.9)', 'rgba(94,234,212,.3)');
+      // 编号圆
+      ctx.fillStyle = CYAN;
+      ctx.beginPath(); ctx.arc(x + 40, y, 21, 0, 6.28); ctx.fill();
+      text(String(i + 1), x + 40, y + 1, 19, '#062018', 'center', 700, MONO);
+      text(k, x + 24, y - 52, 13, CYAN, 'left', 600, MONO);
+      text(title, x + 24, y + 26, 27, INK, 'left', 680);
+      // 描述换行
+      ctx.font = `400 15px ${FONT}`;
+      ctx.fillStyle = DIM; ctx.textAlign = 'left';
+      const words = desc.split('');
+      let line = '', ly = y + 72;
+      for (const ch of words) {
+        if (ctx.measureText(line + ch).width > 350) { ctx.fillText(line, x + 24, ly); line = ch; ly += 24; }
+        else line += ch;
+      }
+      ctx.fillText(line, x + 24, ly);
+      ctx.fillStyle = 'rgba(125,211,252,.08)';
+      roundRect(ctx, x + 24, y + 158, 352, 34, 5); ctx.fill();
+      ctx.fillStyle = BLUE; ctx.fillRect(x + 24, y + 158, 2, 34);
+      text(hint, x + 38, y + 175, 14, BLUE, 'left', 400, MONO);
+      ctx.restore();
+    });
+    // 底部实操截图
+    const shotAppear = ease((p - .5) / .3);
+    if (shotAppear > 0) {
+      ctx.save(); ctx.globalAlpha = ease(p / .5) * shotAppear;
+      windowFrame(images.demo, 340, 520, 760, 240, '实际操作：1–10 体工作台 → 星系盘');
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function s5(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .5);
+    const x = 90;
+    text('FEW-BODY WORKBENCH', x, 235, 15, CYAN, 'left', 600, MONO);
+    text('1–10 体', x, 305, 54, INK, 'left', 680);
+    text('精确至上', x, 370, 54, INK, 'left', 680);
+    const bullets = [
+      'figure-8 三体、拉格朗日三角等经典构型',
+      '直接求和 + 零软化 + 无采样，一键精确模式',
+      '实时轨道要素：a / e / T / |L| / 能量漂移',
+    ];
+    bullets.forEach((b, i) => {
+      const y = 455 + i * 62;
+      ctx.fillStyle = CYAN; ctx.beginPath(); ctx.arc(x + 6, y, 5, 0, 6.28); ctx.fill();
+      text(b, x + 24, y, 18, INK, 'left');
+    });
+    windowFrame(images.fewbody, 640, 215, 710, 400, '★ 1–10 体工作台');
+    ctx.restore();
+  }
+
+  function s6(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .5);
+    eyebrow('STELLAR EVOLUTION', 125);
+    gradientTitle('恒星，也有生命周期', W / 2, 195, 60);
+    const specs = [
+      ['O', '#9bb0ff'], ['B', '#aabfff'], ['A', '#cad7ff'], ['F', '#f8f7ff'],
+      ['G', '#fff4ea'], ['K', '#ffd2a1'], ['M', '#ffcc6f'],
+      ['WD', '#cfe0ff'], ['NS', '#ccddff'], ['BH', '#ffaa33'],
+    ];
+    const bw = 92, gap = 9;
+    const totalW = specs.length * bw + (specs.length - 1) * gap;
+    specs.forEach(([label, color], i) => {
+      const appear = ease((p - .1 - i * .06) / .25);
+      ctx.save(); ctx.globalAlpha = ease(p / .5) * appear;
+      const x = (W - totalW) / 2 + i * (bw + gap);
+      ctx.fillStyle = color;
+      roundRect(ctx, x, 255, bw, 62, 9); ctx.fill();
+      text(label, x + bw / 2, 286, 25, '#0b1220', 'center', 700, MONO);
+      ctx.restore();
+    });
+    text('寿命 t = 10000·M⁻²·⁵ Myr   ·   超新星冲击波   ·   白矮星 / 中子星 / 黑洞遗骸',
+      W / 2, 355, 17, DIM);
+    windowFrame(images.stellar, 420, 420, 600, 300, '恒星光谱渲染 · 事件流');
+    ctx.restore();
+  }
+
+  function s7(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .5);
+    eyebrow('ENGINEERING', 150);
+    gradientTitle('不只是模拟器', W / 2, 225, 66);
+    const feats = [
+      ['▤', 'JSON 完整配置导入导出'], ['↗', 'URL 一键分享场景'], ['●', 'WEBM 画面录制'],
+      ['⌘', '57 项快捷键'], ['↶', '配置撤销 / 重做'], ['✓', '103 项自动化单元测试'],
+    ];
+    feats.forEach(([ico, label], i) => {
+      const appear = ease((p - .1 - i * .08) / .28);
+      ctx.save(); ctx.globalAlpha = ease(p / .5) * appear;
+      const col = i % 3, row = Math.floor(i / 3);
+      const x = 160 + col * 390, y = 330 + row * 130;
+      panel(x, y, 360, 100, 'rgba(15,22,40,.78)', 'rgba(167,139,250,.3)');
+      text(ico, x + 30, y + 50, 26, VIOLET, 'center', 400, MONO);
+      text(label, x + 62, y + 50, 18, INK, 'left');
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  function s8(t, p) {
+    ctx.save(); ctx.globalAlpha = ease(p / .55);
+    gradientTitle('N-Body Studio', W / 2, H / 2 - 90, 96);
+    text('TypeScript + Vite + WebGL2 + Web Worker', W / 2, H / 2 + 5, 22, DIM);
+    const stack = ['Zero Runtime Dependencies', '2D / 3D', 'WebGL2 HDR', 'Vitest · Playwright'];
+    const widths = stack.map(s => s.length * 10 + 42);
+    let sx = W / 2 - widths.reduce((a, b) => a + b, 0) / 2 - 18;
+    stack.forEach((s, i) => {
+      ctx.fillStyle = 'rgba(94,234,212,.06)';
+      ctx.strokeStyle = 'rgba(94,234,212,.3)';
+      roundRect(ctx, sx, H / 2 + 70, widths[i], 42, 21);
+      ctx.fill(); ctx.stroke();
+      text(s, sx + widths[i] / 2, H / 2 + 91, 13, CYAN, 'center', 400, MONO);
+      sx += widths[i] + 12;
+    });
+    text('Open your browser. Start a universe.', W / 2, H / 2 + 190, 18, DIM, 'center', 400, MONO);
+    ctx.restore();
+  }
+
+  const draws = [s1, s2, s3, s4, sDemo, s5, s6, s7, s8];
+
+  function render(t) {
+    background(t);
+    let idx = 0;
+    for (let i = 0; i < starts.length; i++) if (t >= starts[i]) idx = i;
+    draws[idx](t, t - starts[idx]);
+  }
+
+  // 录制控制
+  let playing = false;
+  let current = 0;
+  let last = 0;
+  let recorder = null;
+  let chunks = [];
+  let doneResolve = null;
+
+  function loop(now) {
+    if (playing) {
+      current += Math.min(.1, (now - last) / 1000);
+      if (current >= TOTAL) { current = TOTAL - .01; playing = false; }
+    }
+    last = now;
+    render(current);
+    requestAnimationFrame(loop);
+  }
+
+  window.__canvasPromo = {
+    get total() { return TOTAL; },
+    get ready() { return loaded >= totalImgs; },
+    get current() { return current; },
+    seek(t) { current = clamp(t, 0, TOTAL - .01); render(current); },
+    startRecording(format) {
+      chunks = [];
+      let mime;
+      if (format === 'mp4') {
+        mime = ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4']
+          .find(m => MediaRecorder.isTypeSupported(m)) || 'video/mp4';
+      } else {
+        mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+      }
+      this.mime = mime;
+      const stream = canvas.captureStream(30);
+      recorder = new MediaRecorder(stream, {
+        mimeType: mime,
+        videoBitsPerSecond: 6_000_000,
+      });
+      recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: this.mime || 'video/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => doneResolve?.(String(reader.result).split(',')[1]);
+        reader.readAsDataURL(blob);
+      };
+      current = 0; playing = true; last = performance.now();
+      recorder.start(100);
+      return new Promise(res => { doneResolve = res; });
+    },
+    stopRecording() { playing = false; recorder?.stop(); },
+  };
+
+  requestAnimationFrame(loop);
+  render(0);
+})();
+</script>
+</body>
+</html>

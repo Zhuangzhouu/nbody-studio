@@ -1,0 +1,74 @@
+{
+  "schema": "nbody-studio/v2",
+  "version": 2,
+  "meta": {
+    "createdAt": "2026-11-25T10:37:38.750Z"
+  },
+  "dimensions": 3,
+  "physics": {
+    "dimensions": 3,
+    "G": 1,
+    "dt": 0.02,
+    "softening": 0.6,
+    "theta": 0.6,
+    "integrator": "verlet",
+    "collision": "none",
+    "restitution": 0.7,
+    "bodyRadius": 0.08,
+    "engine": "auto",
+    "sampling": "auto",
+    "maxSimulated": 2000000,
+    "pmGrid": 0
+  },
+  "init": {
+    "count": 1200,
+    "distribution": "disc",
+    "radius": 32,
+    "massMin": 0.6,
+    "massMax": 1.8,
+    "totalMass": 2000,
+    "normalizeMass": true,
+    "spin": 1,
+    "jitter": 0.02,
+    "thickness": 0.08,
+    "seed": 20261125
+  },
+  "view": {
+    "trails": true,
+    "trailLength": 1,
+    "trailBodies": 400,
+    "trailPoints": 48,
+    "maxRenderPoints": 250000,
+    "colorMode": "speed",
+    "pointSize": 2.6,
+    "glow": true,
+    "showGrid": true
+  },
+  "run": {
+    "playing": true,
+    "speed": 1
+  },
+  "bodies": [
+    {
+      "x": -1,
+      "y": 0,
+      "z": 0,
+      "vx": 0,
+      "vy": -0.5,
+      "vz": 0,
+      "mass": 1,
+      "id": 0
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 0,
+      "vx": 0,
+      "vy": 0.5,
+      "vz": 0,
+      "mass": 1,
+      "grav": 2,
+      "id": 1
+    }
+  ]
+}
