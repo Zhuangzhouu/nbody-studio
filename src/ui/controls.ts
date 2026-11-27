@@ -117,7 +117,7 @@ export class ControlPanel {
   readonly state: { init: InitParams; physics: PhysicsParams; view: ViewParams };
 
   private cb: PanelCallbacks;
-  private root: HTMLElement;
+  readonly root: HTMLElement;
 
   private countInput!: HTMLInputElement;
   private countValueTag!: HTMLElement;

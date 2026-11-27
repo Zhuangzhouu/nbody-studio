@@ -37,6 +37,8 @@ import {
 import { presetById } from '../core/presets';
 import { FieldOverlay } from './field-overlay';
 import { guardConfigText, guardImportFile, RateLimiter, WorkerWatchdog } from './guard';
+import { CollabClient, defaultRelayUrl, type Member } from '../net/collab';
+import { CollabPanel } from './collab-panel';
 
 class App {
   private renderer: Renderer;
@@ -69,6 +71,11 @@ class App {
   private fieldOverlay!: FieldOverlay;
   private rebuildLimiter = new RateLimiter();
   private workerWatchdog: WorkerWatchdog | null = null;
+  private collab: CollabClient | null = null;
+  private collabPanel!: CollabPanel;
+  private applyingRemote = false;
+  private selfId = -1;
+  private lastCameraPublish = 0;
 
   private playBtn = document.getElementById('btn-play') as HTMLButtonElement;
   private stepBtn = document.getElementById('btn-step') as HTMLButtonElement;
@@ -169,6 +176,32 @@ class App {
         this.panel.setEditorStatus(`已从当前模拟载入 ${bodies.length} 条数据，可逐条修改。`, 'ok');
       }
     };
+
+    // 多人协作：面板 + 客户端
+    this.collabPanel = new CollabPanel(this.panel.root, {
+      onJoin: (room, name) => this.collabJoin(room, name),
+      onLeave: () => this.collabLeave(),
+      onClaim: () => this.collab?.claimControl(),
+      onRename: (name) => this.collab?.rename(name),
+    });
+    const roomFromUrl = new URLSearchParams(location.search).get('room');
+    if (roomFromUrl) this.collabPanel.prefillRoom(roomFromUrl);
+    this.collab = new CollabClient(defaultRelayUrl(), {
+      onStatus: (status, text) => this.collabPanel.setStatus(status, text),
+      onRoster: (members) => this.onRoster(members),
+      onSystem: (text) => this.notify(`协作：${text}`),
+      onConfig: (cfg) => this.onRemoteConfig(cfg),
+      onRun: (run) => this.onRemoteRun(run),
+      onCamera: (cam) => this.onRemoteCamera(cam),
+      onCursor: () => undefined, // 光标显示属可选增强，当前不渲染
+      onRequestState: () => ({
+        config: this.currentConfig(),
+        run: { playing: this.playing, speed: this.speed },
+        camera: { cx: this.camera.cx, cy: this.camera.cy, zoom: this.camera.zoom },
+      }),
+      onError: (text) => this.toast(`协作错误：${text}`, 'warn'),
+    });
+    this.collabPanel.attach(this.collab);
 
     const host: EnhancedHost = {
       canvas,
@@ -303,6 +336,7 @@ class App {
 
   private apply(): void {
     void this.rebuild(true);
+    this.publishConfig();
   }
 
   private reset(): void {
@@ -348,6 +382,9 @@ class App {
   }
 
   private setPlaying(playing: boolean): void {
+    if (!this.applyingRemote && this.collab?.connected && this.collabPanel.isController()) {
+      this.collab.publishRun({ playing, speed: this.speed });
+    }
     this.playing = playing;
     this.playLabel.textContent = playing ? '暂停' : '继续';
     this.playIcon.textContent = playing ? '⏸' : '▶';
@@ -700,6 +737,74 @@ class App {
     this.acceptConfig({ ok: true, config: cfg, errors: [], warnings: [] }, label);
   }
 
+  // ------------------------------------------------------------ 多人协作
+
+  private collabJoin(room: string, name: string): void {
+    const url = new URL(location.href);
+    url.searchParams.set('room', room);
+    history.replaceState(null, '', url);
+    this.collab?.join(room, name);
+    this.toast(`正在加入协作房间「${room}」…`, 'info');
+  }
+
+  private collabLeave(): void {
+    this.collab?.leave();
+    const url = new URL(location.href);
+    url.searchParams.delete('room');
+    history.replaceState(null, '', url);
+    this.notify('已退出协作房间');
+  }
+
+  private onRoster(members: Member[]): void {
+    this.collabPanel.setMembers(members);
+    const me = members.find((m) => m.name === this.nameInputValue()) ?? members.find((m) => m.id === this.selfId);
+    const idInput = document.getElementById('collab-room') as HTMLInputElement | null;
+    if (idInput && me) this.selfId = me.id;
+    this.collabPanel.setSelfId(this.selfId);
+  }
+
+  private nameInputValue(): string {
+    return (document.getElementById('collab-name') as HTMLInputElement | null)?.value ?? '';
+  }
+
+  private onRemoteConfig(cfg: unknown): void {
+    const parsed = this.currentConfig();
+    const merged = { ...parsed, ...(cfg as Partial<SimulationConfig>) };
+    this.applyingRemote = true;
+    try {
+      this.acceptConfig({ ok: true, config: merged, errors: [], warnings: [] }, '协作同步');
+      this.notify('已同步主控的配置');
+    } finally {
+      this.applyingRemote = false;
+    }
+  }
+
+  private onRemoteRun(run: { playing: boolean; speed: number }): void {
+    this.applyingRemote = true;
+    try {
+      this.setPlaying(!!run.playing);
+      if (typeof run.speed === 'number') {
+        this.speed = run.speed;
+        if (this.speedInput) this.speedInput.value = String(run.speed);
+      }
+    } finally {
+      this.applyingRemote = false;
+    }
+  }
+
+  private onRemoteCamera(cam: { cx: number; cy: number; zoom: number }): void {
+    if (!cam) return;
+    if (typeof cam.cx === 'number') this.camera.cx = cam.cx;
+    if (typeof cam.cy === 'number') this.camera.cy = cam.cy;
+    if (typeof cam.zoom === 'number') this.camera.zoom = cam.zoom;
+  }
+
+  /** 配置变更后由 UI 调用，Broadcast 给房间。 */
+  private publishConfig(): void {
+    if (this.applyingRemote || !this.collab?.connected || !this.collabPanel.isController()) return;
+    this.collab.publishConfig(this.currentConfig());
+  }
+
   private applyPreset(id: string): void {
     const preset = presetById(id);
     if (!preset) return;
@@ -806,6 +911,7 @@ class App {
       `已导入 ${source}：${cfg.dimensions}D · ${this.bodiesOverride ? `${this.bodiesOverride.length} 个显式天体` : '程序化初始条件'}${result.warnings.length ? ` · 警告 ${result.warnings[0]}` : ''}`,
     );
     void this.rebuild(true);
+    this.publishConfig();
     return true;
   }
 

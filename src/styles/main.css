@@ -1443,3 +1443,20 @@ input[type='range']::-moz-range-thumb {
   background: linear-gradient(90deg, #f59e0b, #fbbf24);
   transition: width 0.3s ease;
 }
+
+/* ---------------- 多人协作面板 ---------------- */
+
+#collab-section .section-head { color: #a78bfa; font-weight: 650; }
+#collab-room, #collab-name {
+  flex: 1; min-width: 0; padding: 6px 8px; border-radius: 7px;
+  background: rgba(6,11,20,.9); border: 1px solid var(--line);
+  color: var(--text); font-family: var(--mono); font-size: 11px;
+}
+.collab-members { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.collab-members-title { font-size: 10px; color: var(--text-faint); margin-bottom: 2px; }
+.collab-member { display: flex; align-items: center; gap: 7px; font-size: 11px; font-family: var(--mono); }
+.collab-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.collab-badge {
+  margin-left: auto; font-size: 9px; padding: 1px 5px; border-radius: 4px;
+  background: rgba(167,139,250,.18); color: #d8b4fe;
+}

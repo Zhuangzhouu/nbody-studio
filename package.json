@@ -13,7 +13,8 @@
     "bench": "tsx tools/bench.ts",
     "bench3": "tsx tools/bench3.ts",
     "dist:win": "npm run build && electron-builder --win --x64",
-    "dist:dir": "npm run build && electron-builder --dir"
+    "dist:dir": "npm run build && electron-builder --dir",
+    "collab": "node server/collab.mjs"
   },
   "devDependencies": {
     "@capacitor/android": "^5.7.8",
