@@ -36,6 +36,7 @@ import {
 } from './app-enhanced';
 import { presetById } from '../core/presets';
 import { FieldOverlay } from './field-overlay';
+import { guardConfigText, guardImportFile, RateLimiter, WorkerWatchdog } from './guard';
 
 class App {
   private renderer: Renderer;
@@ -66,6 +67,8 @@ class App {
   private replayIndex = -1;
   private replayActive = false;
   private fieldOverlay!: FieldOverlay;
+  private rebuildLimiter = new RateLimiter();
+  private workerWatchdog: WorkerWatchdog | null = null;
 
   private playBtn = document.getElementById('btn-play') as HTMLButtonElement;
   private stepBtn = document.getElementById('btn-step') as HTMLButtonElement;
@@ -153,6 +156,9 @@ class App {
     this.client.onPerf = (sample) => this.panel.perfPanel.update(sample);
     this.client.onTrail = (t) => this.downloadTrailCsv(t);
     this.client.onError = (message) => this.toast(`物理内核异常：${message}`, 'critical');
+    this.workerWatchdog = new WorkerWatchdog(30_000, () => {
+      this.toast('物理内核 30 秒无响应，可能存在病态配置（如极小软化 + 极大质量），建议重置或降低规模。', 'critical', 9000);
+    });
     this.client.onBodies = (bodies) => {
       const pending = this.pendingBodiesExport;
       this.pendingBodiesExport = null;
@@ -244,7 +250,13 @@ class App {
   }
 
   private async rebuild(fitCamera: boolean): Promise<void> {
+    // 客户端防护：防止连续点击/脚本高频触发导致 Worker 任务堆积
+    if (!this.rebuildLimiter.allow()) {
+      this.toast('操作过于频繁，请稍后再试', 'warn');
+      return;
+    }
     this.setBusy(true);
+    this.workerWatchdog?.kick();
     try {
       const info = await this.client.init(
         this.panel.state.init,
@@ -278,6 +290,7 @@ class App {
       this.toast(`初始化失败：${message}`, 'critical');
       this.showFatal(message);
     } finally {
+      this.workerWatchdog?.disarm();
       this.setBusy(false);
     }
   }
@@ -797,10 +810,22 @@ class App {
   }
 
   private importText(text: string): void {
+    const check = guardConfigText(text);
+    if (!check.ok) {
+      this.panel.setConfigStatus(check.reason!);
+      this.toast(check.reason!, 'critical');
+      return;
+    }
     this.acceptConfig(parseConfigText(text), '文本配置');
   }
 
   private async importFile(file: File): Promise<void> {
+    const check = guardImportFile(file.size);
+    if (!check.ok) {
+      this.panel.setConfigStatus(check.reason!);
+      this.toast(check.reason!, 'critical');
+      return;
+    }
     try {
       let data: Uint8Array = new Uint8Array(await file.arrayBuffer());
       if (file.name.endsWith('.gz') || data[0] === 0x1f) data = await gunzip(data);

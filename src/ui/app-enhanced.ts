@@ -5,6 +5,7 @@
 
 import type { BodyConfig, SimulationConfig, StarType } from '../core/types';
 import { physMass, starLabel, type ResolvedStarType } from '../core/stellar';
+import { guardShareHash, MAX_HASH_LENGTH } from './guard';
 import { DEFAULT_STELLAR } from '../core/params';
 import { configToJSON, downloadBlob, gzip } from '../core/config/serialize';
 import type { Camera } from '../render/camera';
@@ -422,6 +423,11 @@ export async function makeShareUrl(config: SimulationConfig): Promise<string> {
 export async function readShareHash(): Promise<string | null> {
   const m = location.hash.match(/^#c=([A-Za-z0-9_-]+)$/);
   if (!m) return null;
+  const check = guardShareHash(m[1]);
+  if (!check.ok) {
+    console.warn(`[nbody guard] ${check.reason}；已忽略该分享链接。`);
+    return null;
+  }
   const base = m[1].replace(/-/g, '+').replace(/_/g, '/');
   const bin = atob(base + '='.repeat((4 - (base.length % 4)) % 4));
   const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
