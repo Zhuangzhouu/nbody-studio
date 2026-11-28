@@ -198,3 +198,63 @@ export function histogram(values: readonly number[], bins: number): number[] {
   }
   return out;
 }
+
+/** T1：极差 max-min，空数组 NaN。 */
+export function range(values: readonly number[]): number {
+  const [lo, hi] = minMax(values);
+  return Number.isFinite(lo) ? hi - lo : NaN;
+}
+
+/** T2：均方根 √(Σv²/n)。 */
+export function rms(values: readonly number[]): number {
+  if (!values.length) return NaN;
+  return Math.sqrt(values.reduce((a, b) => a + b * b, 0) / values.length);
+}
+
+/** T3：连乘，空数组返回 1。 */
+export function product(values: readonly number[]): number {
+  return values.reduce((a, b) => a * b, 1);
+}
+
+/** T4：条件计数。 */
+export function countBy(values: readonly number[], pred: (v: number) => boolean): number {
+  let c = 0;
+  for (const v of values) if (pred(v)) c++;
+  return c;
+}
+
+/** T5：去重保序。 */
+export function unique(values: readonly number[]): number[] {
+  return [...new Set(values)];
+}
+
+/** T6：分块，size≤0 返回单块副本。 */
+export function chunk<T>(values: readonly T[], size: number): T[][] {
+  const s = Math.max(1, Math.floor(size));
+  const out: T[][] = [];
+  for (let i = 0; i < values.length; i += s) out.push(values.slice(i, i + s));
+  return out;
+}
+
+/** T7：配对，长度取较短者。 */
+export function zip<A, B>(a: readonly A[], b: readonly B[]): Array<[A, B]> {
+  const n = Math.min(a.length, b.length);
+  const out: Array<[A, B]> = [];
+  for (let i = 0; i < n; i++) out.push([a[i], b[i]]);
+  return out;
+}
+
+/** T8：比率格式化，b=0 返回 '—'。 */
+export function formatRatio(a: number, b: number): string {
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return '—';
+  const r = a / b;
+  return Math.abs(r) >= 100 || (Math.abs(r) < 0.01 && r !== 0) ? r.toExponential(2) : r.toFixed(3);
+}
+
+/** T9：快捷钳制到 [0,1]。 */
+export function clamp01(v: number): number { return clamp(v, 0, 1); }
+
+/** T10：反插值 v 在 [a,b] 的位置，a=b 返回 0。 */
+export function inverseLerp(a: number, b: number, v: number): number {
+  return a === b ? 0 : clamp01((v - a) / (b - a));
+}

@@ -324,6 +324,11 @@ export class CanvasInteractions {
       ...(snapW > 1 ? [`权重 ${snapW.toFixed(1)} 颗/代表粒子`] : []),
       `m=${b.mass.toFixed(3)} (${physMass(b.mass, cfg.stellar ?? DEFAULT_STELLAR).toFixed(2)} M☉) μ=${(b.grav ?? b.mass).toFixed(3)}`,
       `|v|=${Math.hypot(b.vx, b.vy, b.vz ?? 0).toFixed(3)}`,
+      `Ek=${(0.5 * b.mass * (b.vx ** 2 + b.vy ** 2 + (b.vz ?? 0) ** 2)).toFixed(4)} · h=${Math.hypot(
+        b.y * (b.vz ?? 0) - (b.z ?? 0) * b.vy,
+        (b.z ?? 0) * b.vx - b.x * (b.vz ?? 0),
+        b.x * b.vy - b.y * b.vx,
+      ).toFixed(4)}`,
       `(${b.x.toFixed(2)}, ${b.y.toFixed(2)}, ${(b.z ?? 0).toFixed(2)})`,
     ];
     for (const row of rows) {

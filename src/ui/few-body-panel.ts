@@ -358,6 +358,22 @@ export class FewBodyPanel {
       states.push({ x, y, z, vx, vy, vz });
     }
     this.bodyTable.innerHTML = rows.join('');
+    // T33/T34：总质量与质心速度汇总（独立行，不破坏表格 5 列布局）
+    let totalMass = 0, px = 0, py = 0, pz = 0;
+    for (let i = 0; i < Math.min(bodies.length, 10); i++) {
+      const b = bodies[i];
+      const sv = snapshot.velocities;
+      const vx = sv ? sv[i * 3] : b.vx;
+      const vy = sv ? sv[i * 3 + 1] : b.vy;
+      const vz = sv ? sv[i * 3 + 2] : (b.vz ?? 0);
+      totalMass += b.mass;
+      px += b.mass * vx; py += b.mass * vy; pz += b.mass * vz;
+    }
+    const summary = el('div', 'fb-row');
+    summary.style.color = '#7dd3fc';
+    summary.innerHTML = `<span>Σ</span><span>m=${totalMass.toFixed(3)}</span>` +
+      `<span>|P|=${Math.hypot(px, py, pz).toFixed(3)}</span><span>—</span><span>—</span>`;
+    this.bodyTable.append(summary);
 
     if (states.length === 2 && cfg.physics.G > 0) {
       const mu = cfg.physics.G * ((bodies[0].grav ?? bodies[0].mass) + (bodies[1].grav ?? bodies[1].mass));

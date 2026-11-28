@@ -1,6 +1,7 @@
 /** C1：能量 / 动量 / 角动量曲线（原生 2D canvas，零依赖）。 */
 
 import { el } from './widgets';
+import { downloadBlob } from '../core/config/serialize';
 import type { MetricsSample } from '../core/types';
 
 const SERIES = [
@@ -49,6 +50,16 @@ export class MetricsPanel {
     this.driftEl.id = 'metrics-drift';
     root.append(this.driftEl);
     this.draw();
+  }
+
+  /** T36：导出诊断曲线为 CSV。 */
+  exportCsv(): void {
+    if (!this.samples.length) return;
+    const head = 'step,time,kinetic,potential,total,angularMomentum,momentum,drift,virial';
+    const lines = this.samples.map((s) => [
+      s.step, s.time, s.kinetic, s.potential, s.total, s.angularMomentum, s.momentum, s.drift ?? '', s.virial ?? '',
+    ].map((v) => (typeof v === 'number' && Number.isFinite(v) ? v.toFixed(8) : '')).join(','));
+    downloadBlob(`nbody-metrics-${Date.now()}.csv`, [head, ...lines].join('\n'));
   }
 
   clear(): void {

@@ -64,6 +64,10 @@ function exportStarType(b: BodySet, i: number): StarType {
 }
 
 export function configToJSON(config: SimulationConfig, pretty = true): string {
+  // T21：导出体数上限保护，防止超大配置生成 GB 级 JSON
+  if (config.bodies && config.bodies.length > 1_000_000) {
+    throw new Error(`导出天体数 ${config.bodies.length} 超过 100 万上限`);
+  }
   return JSON.stringify(config, null, pretty ? 2 : 0);
 }
 

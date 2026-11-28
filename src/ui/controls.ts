@@ -732,9 +732,14 @@ export class ControlPanel {
       sel.append(o);
     }
     const desc = el('div', 'field-hint', PRESETS[0].description);
+    const seedHint = el('div', 'field-hint', `种子：${PRESETS[0].build().init.seed}`);
+    seedHint.style.fontSize = '10px';
     sel.addEventListener('change', () => {
       const p = PRESETS.find((x) => x.id === sel.value);
-      if (p) desc.textContent = p.description;
+      if (p) {
+        desc.textContent = p.description;
+        seedHint.textContent = `种子：${p.build().init.seed}`;
+      }
     });
     const conflictHint = el('div', 'field-hint', '载入预设不会改变快捷键；若发现键位冲突可在帮助面板（?）查看全部 63 项。');
     conflictHint.style.fontSize = '10px';
@@ -742,7 +747,7 @@ export class ControlPanel {
     apply.type = 'button';
     apply.id = 'preset-apply';
     apply.addEventListener('click', () => this.cb.onPreset(sel.value));
-    body.append(sel, desc, conflictHint, apply);
+    body.append(sel, desc, seedHint, conflictHint, apply);
     this.root.append(root);
   }
 
@@ -753,6 +758,7 @@ export class ControlPanel {
   private eventsEl!: HTMLElement;
   private starCardEl!: HTMLElement;
   private events: StellarEvent[] = [];
+  private eventFilter = 'all';
 
   /**
    * G2→I2：接收演化事件流。环形缓冲 200，倒序展示最近 50 条，遗骸行带色点；
@@ -776,7 +782,10 @@ export class ControlPanel {
 
   private renderEvents(): void {
     this.eventsEl.innerHTML = '';
-    const view = this.events.slice(-50).reverse();
+    let filtered = this.events;
+    if (this.eventFilter === 'remnant') filtered = this.events.filter((e) => !!e.remnant);
+    else if (this.eventFilter === 'phase') filtered = this.events.filter((e) => !e.remnant);
+    const view = filtered.slice(-50).reverse();
     for (const e of view) {
       const row = el('div', 'field-hint');
       const dot = el('span', 'ev-dot');

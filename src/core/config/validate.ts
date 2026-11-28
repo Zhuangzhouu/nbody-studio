@@ -152,7 +152,7 @@ export function validateConfig(input: unknown, maxBodies = Infinity): Validation
     massMax: num(i, 'massMax', DEFAULT_INIT.massMax, errors, 'init', { minExclusive: true }),
     totalMass: num(i, 'totalMass', DEFAULT_INIT.totalMass, errors, 'init', { minExclusive: true }),
     normalizeMass: bool(i, 'normalizeMass', DEFAULT_INIT.normalizeMass, 'init', errors),
-    spin: num(i, 'spin', DEFAULT_INIT.spin, errors, 'init', { min: 0 }),
+    spin: num(i, 'spin', DEFAULT_INIT.spin, errors, 'init', { min: 0, max: 1 }),
     jitter: num(i, 'jitter', DEFAULT_INIT.jitter, errors, 'init', { min: 0 }),
     thickness: num(i, 'thickness', DEFAULT_INIT.thickness, errors, 'init', { min: 0 }),
     seed: num(i, 'seed', DEFAULT_INIT.seed, errors, 'init', { min: 0, max: 0xffffffff, integer: true }),
@@ -175,6 +175,10 @@ export function validateConfig(input: unknown, maxBodies = Infinity): Validation
   };
 
   const r = isObj(input.run) ? input.run : {};
+  if (physics.collision === 'merge' && physics.restitution !== 0 && physics.restitution !== undefined) {
+    // restitution 仅在 bounce 模式生效，merge 模式下静默忽略（不报错以免破坏旧配置）
+    void physics.restitution;
+  }
   if (physics.pmGrid > 0 && (physics.pmGrid & (physics.pmGrid - 1)) !== 0) {
     errors.push('physics.pmGrid 必须是 2 的幂');
   }
