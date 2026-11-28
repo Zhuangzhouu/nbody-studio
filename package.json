@@ -1,7 +1,7 @@
 {
   "name": "nbody-studio",
   "private": true,
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "N-Body Studio - 2D/3D N-body gravity simulator (TypeScript + WebGL2 + Web Worker)",
   "type": "module",
   "scripts": {
