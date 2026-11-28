@@ -10,6 +10,23 @@ v2 新增：**2D/3D 切换**、**每个天体的 x/y/z、vx/vy/vz、质量、引
 
 ---
 
+## 多平台适配
+
+| 平台 | 工程 | 交付形态 | 构建环境 |
+|---|---|---|---|
+| Windows | `electron/` | setup.exe + 便携 ZIP（已交付） | Windows |
+| Android | `android/` | Capacitor 原生工程 | Android Studio |
+| iOS / iPadOS | `ios/App/` | Capacitor 原生工程，Info.plist 已配 iPad 横竖屏/分屏 | macOS + Xcode |
+| HarmonyOS | `harmony/` | ArkTS WebView 壳工程（phone/tablet/2in1） | DevEco Studio API 11+ |
+| Linux | Electron | 绿色版 tar.gz（已交付）；AppImage/deb 需 Linux | Windows 生成绿色版 |
+
+移动平台因缺少 macOS/Xcode 与 HarmonyOS SDK，本环境只能生成完整原生工程，
+按 [`docs/PLATFORM-BUILD.md`](docs/PLATFORM-BUILD.md) 在对应环境构建安装包。
+
+同步资源：`npm run build` → `npx cap sync` / `node tools/sync-harmony.mjs`。
+
+---
+
 ## 发行与安装包
 
 ### GitHub 仓库

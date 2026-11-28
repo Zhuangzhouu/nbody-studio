@@ -45,3 +45,15 @@ dist-packages/*.zip
 tools/release.mjs
 
 release-installer/
+
+release-linux/
+
+release-linux2/
+
+ios/App/Pods/
+
+ios/App/App/public/
+
+harmony/entry/src/main/resources/rawfile/assets/
+
+dist-packages/*.tar.gz

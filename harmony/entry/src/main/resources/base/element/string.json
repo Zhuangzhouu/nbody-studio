@@ -1,0 +1,7 @@
+{
+  "string": [
+    { "name": "module_desc", "value": "N-Body Studio module" },
+    { "name": "EntryAbility_desc", "value": "N-Body Studio" },
+    { "name": "EntryAbility_label", "value": "N-Body Studio" }
+  ]
+}
