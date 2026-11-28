@@ -36,6 +36,7 @@ export class MetricsPanel {
       btn.type = 'button';
       btn.dataset.key = s.key;
       btn.style.borderColor = s.color;
+      btn.id = `metric-chip-${s.key}`;
       btn.addEventListener('click', () => {
         if (this.visible.has(s.key)) this.visible.delete(s.key);
         else this.visible.add(s.key);
@@ -72,6 +73,11 @@ export class MetricsPanel {
     this.samples.push(s);
     if (this.samples.length > 300) this.samples.shift();
     const drift = s.drift;
+    // X37：图例按钮 title 显示当前值
+    for (const series of SERIES) {
+      const chip = document.getElementById(`metric-chip-${series.key}`);
+      if (chip) chip.title = `当前 ${series.label}: ${Number(s[series.key]).toExponential(3)}`;
+    }
     this.driftEl.textContent = Number.isFinite(drift)
       ? `能量漂移：${((drift as number) * 100).toExponential(2)}% · 维里 Q=${s.virial?.toFixed(3) ?? '—'} · 逃逸 ${s.escapeCount}`
       : `能量漂移：样本过大不可用 · 维里 Q=${s.virial?.toFixed(3) ?? '—'} · 逃逸 ${s.escapeCount}`;

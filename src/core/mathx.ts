@@ -258,3 +258,144 @@ export function clamp01(v: number): number { return clamp(v, 0, 1); }
 export function inverseLerp(a: number, b: number, v: number): number {
   return a === b ? 0 : clamp01((v - a) / (b - a));
 }
+
+/** U1：省略号截断（按字符数）。 */
+export function truncate(str: string, max: number): string {
+  if (max <= 0) return '';
+  return str.length <= max ? str : `${str.slice(0, Math.max(0, max - 1))}…`;
+}
+
+/** U2：前导零。 */
+export function padZero(n: number, width: number): string {
+  return Math.abs(Math.trunc(n)).toString().padStart(Math.max(1, width), '0');
+}
+
+/** U3：SI 前缀格式化（n/k/M/G）。 */
+export function formatSI(v: number, unit = ''): string {
+  if (!Number.isFinite(v)) return '—';
+  const a = Math.abs(v);
+  const units: Array<[number, string]> = [[1e9, 'G'], [1e6, 'M'], [1e3, 'k']];
+  for (const [scale, prefix] of units) {
+    if (a >= scale) return `${(v / scale).toFixed(a >= scale * 10 ? 0 : 2)}${prefix}${unit}`;
+  }
+  return `${v.toFixed(a < 10 && a !== 0 ? 2 : 0)}${unit}`;
+}
+
+/** U4：带符号格式化。 */
+export function formatSigned(v: number, digits = 2): string {
+  if (!Number.isFinite(v)) return '—';
+  return `${v >= 0 ? '+' : ''}${v.toFixed(digits)}`;
+}
+
+/** U5：mm:ss 计时。 */
+export function formatClock(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '—';
+  const s = Math.floor(seconds);
+  return `${padZero(Math.floor(s / 60), 2)}:${padZero(s % 60, 2)}`;
+}
+
+/** U6：中文折行（按字符宽度，ASCII 算半宽）。 */
+export function splitLines(text: string, maxLen: number): string[] {
+  const width = (ch: string) => (/[\x00-\xff]/.test(ch) ? 0.5 : 1);
+  const out: string[] = [];
+  let line = '', w = 0;
+  for (const ch of text) {
+    const cw = width(ch);
+    if (w + cw > maxLen && line) { out.push(line); line = ''; w = 0; }
+    line += ch; w += cw;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+/** U7/U8：HTML 转义与反转义。 */
+export function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+export function unescapeHtml(s: string): string {
+  return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+}
+
+/** U9：驼峰转空格标签。 */
+export function camelToLabel(s: string): string {
+  return s.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+}
+
+/** U10：中间省略。 */
+export function truncateMiddle(s: string, head: number, tail: number): string {
+  if (s.length <= head + tail + 1) return s;
+  return `${s.slice(0, head)}…${s.slice(-tail)}`;
+}
+
+/** V11：首个满足条件的元素，找不到返回 undefined。 */
+export function first<T>(values: readonly T[], pred: (v: T) => boolean): T | undefined {
+  for (const v of values) if (pred(v)) return v;
+  return undefined;
+}
+
+/** V12：末元素，空数组 undefined。 */
+export function last<T>(values: readonly T[]): T | undefined {
+  return values.length ? values[values.length - 1] : undefined;
+}
+
+/** V13：取前 n / 跳前 n。 */
+export function take<T>(values: readonly T[], n: number): T[] { return values.slice(0, Math.max(0, n)); }
+export function drop<T>(values: readonly T[], n: number): T[] { return values.slice(Math.max(0, n)); }
+
+/** V14：展平一层。 */
+export function flatten<T>(arrays: readonly (readonly T[])[]): T[] {
+  const out: T[] = [];
+  for (const arr of arrays) out.push(...arr);
+  return out;
+}
+
+/** V15：按键字符串分组。 */
+export function groupBy<T>(values: readonly T[], keyFn: (v: T) => string): Record<string, T[]> {
+  const out: Record<string, T[]> = {};
+  for (const v of values) {
+    const k = keyFn(v);
+    (out[k] ??= []).push(v);
+  }
+  return out;
+}
+
+/** V16：按条件分成 [满足, 不满足]。 */
+export function partition<T>(values: readonly T[], pred: (v: T) => boolean): [T[], T[]] {
+  const yes: T[] = [], no: T[] = [];
+  for (const v of values) (pred(v) ? yes : no).push(v);
+  return [yes, no];
+}
+
+/** V17：固定种子洗牌（Fisher-Yates，不改原数组）。 */
+export function shuffle<T>(values: readonly T[], rng: () => number): T[] {
+  const out = [...values];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/** V18：固定种子抽样（不改原数组）。 */
+export function sample<T>(values: readonly T[], n: number, rng: () => number): T[] {
+  return shuffle(values, rng).slice(0, Math.max(0, Math.min(n, values.length)));
+}
+
+/** V19：循环移位，k 可负。 */
+export function rotateArray<T>(values: readonly T[], k: number): T[] {
+  if (!values.length) return [];
+  const s = mod(k, values.length);
+  return [...values.slice(s), ...values.slice(0, s)];
+}
+
+/** V20：频次映射。 */
+export function counts(values: readonly string[] | readonly number[]): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const v of values) {
+    const k = String(v);
+    m.set(k, (m.get(k) ?? 0) + 1);
+  }
+  return m;
+}

@@ -24,6 +24,7 @@ export class Hud {
   private integrator = $('hud-integrator');
   private virial = $('hud-virial');
   private escape = $('hud-escape');
+  private speed = $('hud-speed');
 
   private lastFpsUpdate = 0;
   private frames = 0;
@@ -61,6 +62,7 @@ export class Hud {
     this.integrator.textContent = diag.integrator ?? '—';
     this.virial.textContent = diag.virial === null ? '—' : diag.virial.toFixed(3);
     this.escape.textContent = formatInt(diag.escapeCount);
+    // X35：倍速由 app 在主循环同步，这里仅占位；若外部未设置则不改
 
     // I3：物理时钟（Myr 换算 + 演化速率 = ΔMyr / Δ真实秒，EMA 平滑）
     if (stellar) {

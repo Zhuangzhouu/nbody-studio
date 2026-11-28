@@ -728,7 +728,7 @@ export class ControlPanel {
     for (const p of PRESETS) {
       const o = el('option');
       o.value = p.id;
-      o.textContent = `${p.name}（${p.dimensions}D）`;
+      o.textContent = `${p.name}（${p.dimensions}D · ${p.build().init.count} 体）`;
       sel.append(o);
     }
     const desc = el('div', 'field-hint', PRESETS[0].description);
